@@ -2,9 +2,10 @@ package com.yldefonso.ojodchakra.screens.camera
 
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -18,22 +19,36 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.yldefonso.ojodchakra.ml.PlagaClassifier
 import java.util.concurrent.Executors
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun CameraScreen(
-    viewModel: CameraViewModel = viewModel(),
+    viewModel: CameraViewModel,
     onDiagnosisReady: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    val mainExecutor = remember { ContextCompat.getMainExecutor(context) }
 
-    val hasPermission = remember {
-        ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasPermission = granted
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasPermission) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -41,7 +56,7 @@ fun CameraScreen(
             AndroidView(
                 modifier = Modifier.weight(1f),
                 factory = { ctx ->
-                    val previewView = PreviewView(ctx)
+                    val previewView = androidx.camera.view.PreviewView(ctx)
                     val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
                     cameraProviderFuture.addListener({
@@ -78,9 +93,12 @@ fun CameraScreen(
                                 val classifier = PlagaClassifier(context)
                                 val result = classifier.classify(bitmap)
 
-                                viewModel.onPhotoCaptured(bitmap)
-                                viewModel.onResultReady(result)
-                                onDiagnosisReady()
+                                // Volvemos al hilo principal antes de actualizar el ViewModel y navegar
+                                mainExecutor.execute {
+                                    viewModel.onPhotoCaptured(bitmap)
+                                    viewModel.onResultReady(result)
+                                    onDiagnosisReady()
+                                }
                             }
 
                             override fun onError(exception: ImageCaptureException) {
@@ -96,11 +114,16 @@ fun CameraScreen(
                 Text("Escanear cultivo")
             }
         } else {
-            Box(
+            Column(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Text("Se necesita permiso de cámara para continuar")
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                    Text("Conceder permiso")
+                }
             }
         }
     }

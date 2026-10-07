@@ -11,7 +11,7 @@ class PlagaClassifier(context: Context) {
 
     private var interpreter: Interpreter
     private var labels: List<String>
-    private val inputSize = 224
+    private val inputSize = 256
 
     init {
         val model = FileUtil.loadMappedFile(context, "model.tflite")
