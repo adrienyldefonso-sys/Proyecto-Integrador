@@ -1,12 +1,18 @@
 package com.yldefonso.ojodchakra.screens.camera
 
+import android.app.Application
 import android.graphics.Bitmap
-import androidx.lifecycle.ViewModel
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.yldefonso.ojodchakra.data.repository.DiagnosticoRepository
 import com.yldefonso.ojodchakra.ml.ClassificationResult
+import kotlinx.coroutines.launch
 
-class CameraViewModel : ViewModel() {
+class CameraViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = DiagnosticoRepository(application)
 
     private val _capturedBitmap = mutableStateOf<Bitmap?>(null)
     val capturedBitmap: State<Bitmap?> = _capturedBitmap
@@ -20,6 +26,8 @@ class CameraViewModel : ViewModel() {
 
     fun onResultReady(result: ClassificationResult) {
         _result.value = result
+        val bitmap = _capturedBitmap.value ?: return
+        viewModelScope.launch { repository.guardar(bitmap, result) }
     }
 
     fun reset() {

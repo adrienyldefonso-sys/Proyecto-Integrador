@@ -20,7 +20,11 @@ class PlagaClassifier(context: Context) {
     }
 
     fun classify(bitmap: Bitmap): ClassificationResult {
-        val resized = Bitmap.createScaledBitmap(bitmap, inputSize, inputSize, true)
+        // 1. Recortar el centro de la imagen en formato cuadrado para eliminar bordes/mesas
+        val squareBitmap = cropCenterSquare(bitmap)
+
+        // 2. Redimensionar el centro recortado a 256x256
+        val resized = Bitmap.createScaledBitmap(squareBitmap, inputSize, inputSize, true)
         val inputBuffer = convertBitmapToByteBuffer(resized)
 
         val output = Array(1) { FloatArray(labels.size) }
@@ -38,6 +42,18 @@ class PlagaClassifier(context: Context) {
         )
     }
 
+    // Recorta el cuadrado central de la foto eliminando los bordes laterales/superiores
+    private fun cropCenterSquare(bitmap: Bitmap): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val newSize = if (height > width) width else height
+
+        val cropX = (width - newSize) / 2
+        val cropY = (height - newSize) / 2
+
+        return Bitmap.createBitmap(bitmap, cropX, cropY, newSize, newSize)
+    }
+
     private fun convertBitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
         val byteBuffer = ByteBuffer.allocateDirect(4 * inputSize * inputSize * 3)
         byteBuffer.order(ByteOrder.nativeOrder())
@@ -45,10 +61,15 @@ class PlagaClassifier(context: Context) {
         val pixels = IntArray(inputSize * inputSize)
         bitmap.getPixels(pixels, 0, inputSize, 0, 0, inputSize, inputSize)
 
+        // Preprocesamiento flotante puro (0.0f a 255.0f)
         for (pixel in pixels) {
-            byteBuffer.putFloat(((pixel shr 16) and 0xFF) / 255.0f)
-            byteBuffer.putFloat(((pixel shr 8) and 0xFF) / 255.0f)
-            byteBuffer.putFloat((pixel and 0xFF) / 255.0f)
+            val r = ((pixel shr 16) and 0xFF).toFloat()
+            val g = ((pixel shr 8) and 0xFF).toFloat()
+            val b = (pixel and 0xFF).toFloat()
+
+            byteBuffer.putFloat(r)
+            byteBuffer.putFloat(g)
+            byteBuffer.putFloat(b)
         }
         return byteBuffer
     }
