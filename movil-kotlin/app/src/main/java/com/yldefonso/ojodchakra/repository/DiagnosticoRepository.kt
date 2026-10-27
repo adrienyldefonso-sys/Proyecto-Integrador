@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import com.yldefonso.ojodchakra.data.local.AppDatabase
 import com.yldefonso.ojodchakra.data.model.Diagnostico
 import com.yldefonso.ojodchakra.ml.ClassificationResult
+import com.yldefonso.ojodchakra.ml.MotorRecomendaciones
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -31,29 +32,23 @@ class DiagnosticoRepository(context: Context) {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
             }
 
+            val recomendacion = MotorRecomendaciones.obtener(resultado.label)
+
             dao.insertar(
                 Diagnostico(
                     id = id,
                     usuarioId = USUARIO_LOCAL,
                     rutaFoto = archivo.absolutePath,
                     plagaDetectada = resultado.label,
-                    confianza = resultado.confidence
+                    confianza = resultado.confidence,
+                    nivelSeveridad = recomendacion.nivelSeveridad,
+                    recomendacion = recomendacion.tratamiento
                 )
             )
         }
 
-    suspend fun limpiarHistorial() = withContext(Dispatchers.IO) {
-        // 1. Limpia los registros de la base de datos Room
-        dao.borrarTodo()
-
-        // 2. Elimina las imágenes almacenadas localmente
-        val carpeta = File(appContext.filesDir, "reportes")
-        if (carpeta.exists()) {
-            carpeta.deleteRecursively()
-        }
-    }
-
     companion object {
+        // Provisional: se reemplaza cuando exista el inicio de sesión
         const val USUARIO_LOCAL = "usuario_local"
     }
 }
