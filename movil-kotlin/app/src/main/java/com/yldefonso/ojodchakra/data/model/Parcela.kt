@@ -11,6 +11,7 @@ data class Parcela(
     @ColumnInfo(name = "usuario_id") val usuarioId: String,
     val nombre: String,
     val cultivo: String,
+    val referencia: String = "",
     val latitud: Double,
     val longitud: Double,
     @ColumnInfo(name = "fecha_registro") val fechaRegistro: Long = System.currentTimeMillis(),
