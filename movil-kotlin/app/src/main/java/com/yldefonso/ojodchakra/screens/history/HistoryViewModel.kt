@@ -16,7 +16,11 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     private val repository = DiagnosticoRepository(application)
 
     val diagnosticos: StateFlow<List<Diagnostico>> = repository.diagnosticos
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     fun observarDiagnostico(id: String): Flow<Diagnostico?> =
         repository.observarPorId(id)

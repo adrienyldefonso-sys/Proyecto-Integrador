@@ -47,8 +47,17 @@ class DiagnosticoRepository(context: Context) {
             )
         }
 
+    suspend fun limpiarHistorial() = withContext(Dispatchers.IO) {
+        // Elimina los archivos de fotos locales
+        val carpeta = File(appContext.filesDir, "reportes")
+        if (carpeta.exists()) {
+            carpeta.listFiles()?.forEach { it.delete() }
+        }
+        // Elimina los registros de la base de datos Room
+        dao.limpiarHistorial()
+    }
+
     companion object {
-        // Provisional: se reemplaza cuando exista el inicio de sesión
         const val USUARIO_LOCAL = "usuario_local"
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yldefonso.ojodchakra.ml.MotorRecomendaciones
 import com.yldefonso.ojodchakra.screens.camera.CameraViewModel
 
 // Paleta de Colores Institucional OjoDChakra
@@ -39,6 +40,8 @@ private val FondoSano = Color(0xFFE8F5E9)
 private val TextoSano = Color(0xFF2E7D32)
 private val FondoAlerta = Color(0xFFFFF3E0)
 private val TextoAlerta = Color(0xFFE65100)
+private val FondoMedia = Color(0xFFFFF8E1)
+private val TextoMedia = Color(0xFF8D6E00)
 
 @Composable
 fun ResultScreen(
@@ -54,6 +57,15 @@ fun ResultScreen(
     } ?: 0f
     val progresoBarra = (porcentajeCalculado / 100f).coerceIn(0f, 1f)
     val esPlantaSana = result?.labelEnEspanol?.contains("sana", ignoreCase = true) == true
+
+    // HU-03: recomendación según el diagnóstico del modelo
+    val recomendacion = result?.let { MotorRecomendaciones.obtener(it.label) }
+    val (fondoSeveridad, colorSeveridad, textoSeveridad) = when (recomendacion?.nivelSeveridad) {
+        "ALTA" -> Triple(FondoAlerta, TextoAlerta, "Severidad alta")
+        "MEDIA" -> Triple(FondoMedia, TextoMedia, "Severidad media")
+        "BAJA" -> Triple(FondoSano, TextoSano, "Severidad baja")
+        else -> Triple(FondoSano, TextoSano, "Sin riesgo")
+    }
 
     Box(
         modifier = Modifier
@@ -199,7 +211,7 @@ fun ResultScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (result != null) {
-                        // Badge de tipo de hallazgo (Texto limpio sin ícono/emoji de check)
+                        // Badge de tipo de hallazgo
                         Surface(
                             color = if (esPlantaSana) FondoSano else FondoAlerta,
                             shape = RoundedCornerShape(50)
@@ -294,6 +306,67 @@ fun ResultScreen(
                 }
             }
 
+            // ==========================================
+            // 3.1 TARJETA DE RECOMENDACIÓN (HU-03)
+            // ==========================================
+            if (recomendacion != null) {
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = RoundedCornerShape(20.dp),
+                            spotColor = VerdePrincipal.copy(alpha = 0.15f)
+                        ),
+                    shape = RoundedCornerShape(20.dp),
+                    color = SuperficieTarjeta,
+                    border = BorderStroke(1.dp, VerdePrincipal.copy(alpha = 0.15f))
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Recomendación de tratamiento",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    color = TextoOscuro,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Surface(
+                                color = fondoSeveridad,
+                                shape = RoundedCornerShape(50)
+                            ) {
+                                Text(
+                                    text = textoSeveridad,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = colorSeveridad,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 11.sp
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = VerdeSubtil, thickness = 1.dp)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        SeccionRecomendacion("Qué es", recomendacion.descripcion)
+                        SeccionRecomendacion("Qué hacer ahora", recomendacion.tratamiento)
+                        SeccionRecomendacion("Cómo prevenirlo", recomendacion.prevencion)
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // ==========================================
@@ -363,5 +436,31 @@ fun ResultScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SeccionRecomendacion(titulo: String, contenido: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp)
+    ) {
+        Text(
+            text = titulo,
+            style = MaterialTheme.typography.labelLarge.copy(
+                color = VerdePrincipal,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp
+            )
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = contenido,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = TextoOscuro,
+                fontSize = 14.sp
+            )
+        )
     }
 }
