@@ -2,6 +2,7 @@ package com.yldefonso.ojodchakra.data.local
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.yldefonso.ojodchakra.data.model.Diagnostico
 import kotlinx.coroutines.flow.Flow
@@ -15,9 +16,9 @@ interface DiagnosticoDao {
     @Query("SELECT * FROM diagnosticos WHERE id = :id")
     fun observarPorId(id: String): Flow<Diagnostico?>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(diagnostico: Diagnostico)
 
     @Query("DELETE FROM diagnosticos")
-    suspend fun borrarTodo()
+    suspend fun limpiarHistorial()
 }
