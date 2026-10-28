@@ -5,6 +5,10 @@
     <!-- Permisos para la cámara -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Permisos de ubicación -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <!-- Características requeridas por CameraX -->
     <uses-feature
         android:name="android.hardware.camera.any"
@@ -12,6 +16,11 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
+
+    <!-- Característica opcional de GPS -->
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
