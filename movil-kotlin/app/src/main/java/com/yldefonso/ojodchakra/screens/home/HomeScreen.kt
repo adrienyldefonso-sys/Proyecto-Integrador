@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.SignalCellularConnectedNoInternet4Bar
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -41,7 +42,8 @@ private val TextoMuted = Color(0xFF5A7060)
 @Composable
 fun HomeScreen(
     onStartScan: () -> Unit,
-    onVerHistorial: () -> Unit
+    onVerHistorial: () -> Unit,
+    onVerParcelas: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -67,7 +69,7 @@ fun HomeScreen(
                 painter = painterResource(id = R.drawable.logo_ojodchakra),
                 contentDescription = "Logo OjoDChakra",
                 modifier = Modifier
-                    .size(210.dp)
+                    .size(190.dp)
                     .padding(bottom = 8.dp)
             )
 
@@ -164,12 +166,12 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // 5. BOTONES DE ACCIÓN COMPACTOS Y ELEGANTES
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
 
                 // --- BOTÓN PRINCIPAL: ESCANEAR CULTIVO ---
@@ -189,7 +191,7 @@ fun HomeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -199,7 +201,7 @@ fun HomeScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(44.dp)
                                     .clip(CircleShape)
                                     .background(Color.White.copy(alpha = 0.18f)),
                                 contentAlignment = Alignment.Center
@@ -208,7 +210,7 @@ fun HomeScreen(
                                     imageVector = Icons.Default.CameraAlt,
                                     contentDescription = null,
                                     tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
 
@@ -220,14 +222,14 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.titleLarge.copy(
                                         color = Color.White,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp
+                                        fontSize = 17.sp
                                     )
                                 )
                                 Text(
                                     text = "Analizar hoja con la cámara",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = Color.White.copy(alpha = 0.85f),
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
                                     )
                                 )
                             }
@@ -242,7 +244,73 @@ fun HomeScreen(
                     }
                 }
 
-                // --- BOTÓN SECUNDARIO: VER HISTORIAL ---
+                // --- BOTÓN SECUNDARIO: MIS PARCELAS ---
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable { onVerParcelas() },
+                    shape = RoundedCornerShape(20.dp),
+                    color = SuperficieTarjeta,
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, VerdePrincipal.copy(alpha = 0.35f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(VerdeSubtil),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Place,
+                                    contentDescription = null,
+                                    tint = VerdePrincipal,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column {
+                                Text(
+                                    text = "Mis parcelas",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = TextoOscuro,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                )
+                                Text(
+                                    text = "Gestionar áreas de cultivo",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = TextoMuted,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = VerdePrincipal,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                // --- BOTÓN TERCIARIO: VER HISTORIAL ---
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -255,7 +323,7 @@ fun HomeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -265,7 +333,7 @@ fun HomeScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(44.dp)
                                     .clip(CircleShape)
                                     .background(VerdeSubtil),
                                 contentAlignment = Alignment.Center
@@ -274,7 +342,7 @@ fun HomeScreen(
                                     imageVector = Icons.Default.History,
                                     contentDescription = null,
                                     tint = VerdePrincipal,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
 
@@ -286,14 +354,14 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         color = TextoOscuro,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 17.sp
+                                        fontSize = 16.sp
                                     )
                                 )
                                 Text(
                                     text = "Consultar reportes guardados",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = TextoMuted,
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
                                     )
                                 )
                             }
