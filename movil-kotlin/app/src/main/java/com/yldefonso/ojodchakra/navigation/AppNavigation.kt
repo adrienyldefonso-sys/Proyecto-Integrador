@@ -12,6 +12,7 @@ import com.yldefonso.ojodchakra.screens.camera.CameraViewModel
 import com.yldefonso.ojodchakra.screens.history.DetailScreen
 import com.yldefonso.ojodchakra.screens.history.HistoryScreen
 import com.yldefonso.ojodchakra.screens.home.HomeScreen
+import com.yldefonso.ojodchakra.screens.parcelas.ParcelaFormScreen
 import com.yldefonso.ojodchakra.screens.result.ResultScreen
 
 @Composable
@@ -73,6 +74,14 @@ fun AppNavigation() {
             DetailScreen(
                 id = id,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 6. FORMULARIO DE PARCELA
+        composable("parcela_form") {
+            ParcelaFormScreen(
+                onBack = { navController.popBackStack() },
+                onGuardada = { navController.popBackStack() }
             )
         }
     }
