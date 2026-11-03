@@ -1,0 +1,52 @@
+<!-- res/drawable/logo_ojodchakra.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="300dp"
+    android:viewportWidth="300"
+    android:viewportHeight="300">
+
+    <!-- Círculo de fondo verde claro -->
+    <path
+        android:fillColor="#EBF5ED"
+        android:strokeColor="#2E6A38"
+        android:strokeWidth="4"
+        android:pathData="M 150,20 A 110,110 0 1,1 149.9,20 Z" />
+
+    <!-- Ceja izquierda -->
+    <path
+        android:strokeColor="#2E6A38"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M 100,65 Q 120,48 135,55" />
+
+    <!-- Ceja derecha -->
+    <path
+        android:strokeColor="#2E6A38"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M 200,65 Q 180,48 165,55" />
+
+    <!-- Ojo (Borde exterior y relleno blanco) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#2E6A38"
+        android:strokeWidth="4"
+        android:pathData="M 65,135 Q 150,90 235,135 Q 150,180 65,135 Z" />
+
+    <!-- Iris (Verde) -->
+    <path
+        android:fillColor="#2E6A38"
+        android:pathData="M 150,135 m -38,0 a 38,38 0 1,0 76,0 a 38,38 0 1,0 -76,0" />
+
+    <!-- Pupila vertical -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M 150,115 L 150,155" />
+
+    <!-- Brillo en el iris -->
+    <path
+        android:fillColor="#EBF5ED"
+        android:pathData="M 138,122 m -6,0 a 6,6 0 1,0 12,0 a 6,6 0 1,0 -12,0" />
+</vector>

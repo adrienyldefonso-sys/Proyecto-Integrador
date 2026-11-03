@@ -2,12 +2,18 @@ package com.yldefonso.ojodchakra.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.yldefonso.ojodchakra.screens.camera.CameraScreen
 import com.yldefonso.ojodchakra.screens.camera.CameraViewModel
+import com.yldefonso.ojodchakra.screens.history.DetailScreen
+import com.yldefonso.ojodchakra.screens.history.HistoryScreen
 import com.yldefonso.ojodchakra.screens.home.HomeScreen
+import com.yldefonso.ojodchakra.screens.parcelas.ParcelaFormScreen
+import com.yldefonso.ojodchakra.screens.parcelas.ParcelasScreen
 import com.yldefonso.ojodchakra.screens.result.ResultScreen
 
 @Composable
@@ -17,12 +23,17 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = "home") {
 
+        // 1. PANTALLA PRINCIPAL (HOME)
         composable("home") {
             HomeScreen(
-                onStartScan = { navController.navigate("camera") }
+                // HU04-TAREA 4: Redirige a selección de parcela antes de abrir la cámara
+                onStartScan = { navController.navigate("seleccion_parcela") },
+                onVerHistorial = { navController.navigate("history") },
+                onVerParcelas = { navController.navigate("parcelas") }
             )
         }
 
+        // 2. PANTALLA DE CÁMARA / ESCÁNER
         composable("camera") {
             CameraScreen(
                 viewModel = cameraViewModel,
@@ -30,10 +41,76 @@ fun AppNavigation() {
             )
         }
 
+        // 3. PANTALLA DE RESULTADOS
         composable("result") {
             ResultScreen(
                 viewModel = cameraViewModel,
-                onScanAgain = { navController.navigate("camera") }
+                onScanAgain = {
+                    // Mantiene la navegación directa a "camera" para conservar la parcela seleccionada
+                    navController.navigate("camera") {
+                        popUpTo("result") { inclusive = true }
+                    }
+                },
+                onGoHome = {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 4. PANTALLA DE HISTORIAL
+        composable("history") {
+            HistoryScreen(
+                onReporteClick = { id ->
+                    navController.navigate("detail/$id")
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 5. PANTALLA DE DETALLE DEL REPORTE
+        composable(
+            route = "detail/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            DetailScreen(
+                id = id,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 6. LISTA DE PARCELAS (DESDE HOME)
+        composable("parcelas") {
+            ParcelasScreen(
+                onBack = { navController.popBackStack() },
+                onRegistrar = { navController.navigate("parcela_form") }
+            )
+        }
+
+        // 7. FORMULARIO DE PARCELA
+        composable("parcela_form") {
+            ParcelaFormScreen(
+                onBack = { navController.popBackStack() },
+                onGuardada = { navController.popBackStack() }
+            )
+        }
+
+        // 8. SELECCIÓN DE PARCELA PREVIA AL ESCANEO // HU04-TAREA 4: Ruta para elegir parcela antes de escanear
+        composable("seleccion_parcela") {
+            ParcelasScreen(
+                titulo = "Elige la parcela",
+                onBack = { navController.popBackStack() },
+                onRegistrar = { navController.navigate("parcela_form") },
+                onParcelaClick = { id ->
+                    cameraViewModel.seleccionarParcela(id)
+                    navController.navigate("camera")
+                },
+                onSinParcela = {
+                    cameraViewModel.seleccionarParcela(null)
+                    navController.navigate("camera")
+                }
             )
         }
     }
