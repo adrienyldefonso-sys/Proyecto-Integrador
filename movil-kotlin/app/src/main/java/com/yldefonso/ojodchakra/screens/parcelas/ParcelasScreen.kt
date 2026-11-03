@@ -38,6 +38,8 @@ fun ParcelasScreen(
     onBack: () -> Unit,
     onRegistrar: () -> Unit,
     onParcelaClick: ((String) -> Unit)? = null,
+    onSinParcela: (() -> Unit)? = null,
+    titulo: String = "Mis parcelas",
     viewModel: ParcelasViewModel = viewModel()
 ) {
     val parcelas by viewModel.parcelas.collectAsState()
@@ -72,7 +74,7 @@ fun ParcelasScreen(
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
-                    text = "Mis parcelas",
+                    text = titulo,
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = TextoOscuro,
                         fontWeight = FontWeight.ExtraBold,
@@ -82,6 +84,7 @@ fun ParcelasScreen(
                 Text(
                     text = when {
                         lista == null -> "Cargando..."
+                        onParcelaClick != null -> "Toca la parcela donde vas a escanear"
                         lista.size == 1 -> "1 parcela registrada"
                         else -> "${lista.size} parcelas registradas"
                     },
@@ -117,6 +120,26 @@ fun ParcelasScreen(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+
+        // Solo aparece en modo selección
+        if (onSinParcela != null) {
+            OutlinedButton(
+                onClick = onSinParcela,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.5.dp, VerdePrincipal.copy(alpha = 0.4f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = VerdePrincipal)
+            ) {
+                Text(
+                    text = "Escanear sin parcela",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         Button(
             onClick = onRegistrar,
