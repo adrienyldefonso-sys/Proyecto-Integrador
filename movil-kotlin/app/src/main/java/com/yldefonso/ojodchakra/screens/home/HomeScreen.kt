@@ -11,7 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Place // <-- NUEVO: Importación del icono de ubicación/parcela
 import androidx.compose.material.icons.filled.SignalCellularConnectedNoInternet4Bar
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -43,7 +43,7 @@ private val TextoMuted = Color(0xFF5A7060)
 fun HomeScreen(
     onStartScan: () -> Unit,
     onVerHistorial: () -> Unit,
-    onVerParcelas: () -> Unit
+    onVerParcelas: () -> Unit // <-- NUEVO: Parámetro callback para el botón "Mis parcelas"
 ) {
     Box(
         modifier = Modifier
@@ -244,12 +244,12 @@ fun HomeScreen(
                     }
                 }
 
-                // --- BOTÓN SECUNDARIO: MIS PARCELAS ---
+                // --- BOTÓN SECUNDARIO: MIS PARCELAS --- // <-- NUEVO: Bloque completo de la tarjeta "Mis parcelas"
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .clickable { onVerParcelas() },
+                        .clickable { onVerParcelas() }, // <-- NUEVO: Ejecuta la navegación al presionar el botón
                     shape = RoundedCornerShape(20.dp),
                     color = SuperficieTarjeta,
                     border = androidx.compose.foundation.BorderStroke(1.5.dp, VerdePrincipal.copy(alpha = 0.35f))
@@ -273,7 +273,7 @@ fun HomeScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Place,
+                                    imageVector = Icons.Default.Place, // <-- NUEVO: Icono de localización/parcela
                                     contentDescription = null,
                                     tint = VerdePrincipal,
                                     modifier = Modifier.size(22.dp)
