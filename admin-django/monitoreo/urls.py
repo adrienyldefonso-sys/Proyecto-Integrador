@@ -1,8 +1,12 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-router = DefaultRouter()
+from . import views
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("parcelas/", views.ParcelaListView.as_view(), name="parcelas"),
+    path(
+        "parcelas/<uuid:parcela_id>/historial/",
+        views.HistorialParcelaView.as_view(),
+        name="historial-parcela",
+    ),
 ]
