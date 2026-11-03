@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yldefonso.ojodchakra.ml.MotorRecomendaciones
 import com.yldefonso.ojodchakra.screens.camera.CameraViewModel
+import com.yldefonso.ojodchakra.util.FormatoParcela // <-- HU04-TAREA 4: Importación para el texto de guardado
 
 // Paleta de Colores Institucional OjoDChakra
 private val VerdePrincipal = Color(0xFF2E6A38)
@@ -286,8 +287,9 @@ fun ResultScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
+                        // HU04-TAREA 4: Muestra dinámicamente si fue guardado en una parcela específica o sin parcela
                         Text(
-                            text = "Guardado automáticamente en el historial local",
+                            text = FormatoParcela.textoGuardado(viewModel.parcelaNombre.value),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = TextoMuted,
                                 fontSize = 11.sp,
