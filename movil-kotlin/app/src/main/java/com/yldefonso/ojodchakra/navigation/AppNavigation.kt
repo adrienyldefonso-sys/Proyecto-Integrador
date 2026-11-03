@@ -13,7 +13,7 @@ import com.yldefonso.ojodchakra.screens.history.DetailScreen
 import com.yldefonso.ojodchakra.screens.history.HistoryScreen
 import com.yldefonso.ojodchakra.screens.home.HomeScreen
 import com.yldefonso.ojodchakra.screens.parcelas.ParcelaFormScreen
-import com.yldefonso.ojodchakra.screens.parcelas.ParcelasScreen // <-- NUEVO: Importación de la pantalla de parcelas
+import com.yldefonso.ojodchakra.screens.parcelas.ParcelasScreen
 import com.yldefonso.ojodchakra.screens.result.ResultScreen
 
 @Composable
@@ -26,9 +26,10 @@ fun AppNavigation() {
         // 1. PANTALLA PRINCIPAL (HOME)
         composable("home") {
             HomeScreen(
-                onStartScan = { navController.navigate("camera") },
+                // HU04-TAREA 4: Redirige a selección de parcela antes de abrir la cámara
+                onStartScan = { navController.navigate("seleccion_parcela") },
                 onVerHistorial = { navController.navigate("history") },
-                onVerParcelas = { navController.navigate("parcelas") } // <-- NUEVO: Navegación a la pantalla de parcelas
+                onVerParcelas = { navController.navigate("parcelas") }
             )
         }
 
@@ -45,6 +46,7 @@ fun AppNavigation() {
             ResultScreen(
                 viewModel = cameraViewModel,
                 onScanAgain = {
+                    // Mantiene la navegación directa a "camera" para conservar la parcela seleccionada
                     navController.navigate("camera") {
                         popUpTo("result") { inclusive = true }
                     }
@@ -79,7 +81,7 @@ fun AppNavigation() {
             )
         }
 
-        // 6. LISTA DE PARCELAS // <-- NUEVO: Ruta para mostrar la lista de parcelas
+        // 6. LISTA DE PARCELAS (DESDE HOME)
         composable("parcelas") {
             ParcelasScreen(
                 onBack = { navController.popBackStack() },
@@ -92,6 +94,23 @@ fun AppNavigation() {
             ParcelaFormScreen(
                 onBack = { navController.popBackStack() },
                 onGuardada = { navController.popBackStack() }
+            )
+        }
+
+        // 8. SELECCIÓN DE PARCELA PREVIA AL ESCANEO // HU04-TAREA 4: Ruta para elegir parcela antes de escanear
+        composable("seleccion_parcela") {
+            ParcelasScreen(
+                titulo = "Elige la parcela",
+                onBack = { navController.popBackStack() },
+                onRegistrar = { navController.navigate("parcela_form") },
+                onParcelaClick = { id ->
+                    cameraViewModel.seleccionarParcela(id)
+                    navController.navigate("camera")
+                },
+                onSinParcela = {
+                    cameraViewModel.seleccionarParcela(null)
+                    navController.navigate("camera")
+                }
             )
         }
     }

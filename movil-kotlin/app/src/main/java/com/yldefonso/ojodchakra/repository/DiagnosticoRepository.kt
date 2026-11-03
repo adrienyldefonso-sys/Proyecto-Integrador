@@ -22,30 +22,35 @@ class DiagnosticoRepository(context: Context) {
 
     fun observarPorId(id: String): Flow<Diagnostico?> = dao.observarPorId(id)
 
-    suspend fun guardar(bitmap: Bitmap, resultado: ClassificationResult) =
-        withContext(Dispatchers.IO) {
-            val id = UUID.randomUUID().toString()
-            val carpeta = File(appContext.filesDir, "reportes").apply { mkdirs() }
-            val archivo = File(carpeta, "$id.jpg")
+    // CAMBIO 1: Firma actualizada con el parámetro opcional parcelaId
+    suspend fun guardar(
+        bitmap: Bitmap,
+        resultado: ClassificationResult,
+        parcelaId: String? = null
+    ) = withContext(Dispatchers.IO) {
+        val id = UUID.randomUUID().toString()
+        val carpeta = File(appContext.filesDir, "reportes").apply { mkdirs() }
+        val archivo = File(carpeta, "$id.jpg")
 
-            FileOutputStream(archivo).use {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
-            }
-
-            val recomendacion = MotorRecomendaciones.obtener(resultado.label)
-
-            dao.insertar(
-                Diagnostico(
-                    id = id,
-                    usuarioId = USUARIO_LOCAL,
-                    rutaFoto = archivo.absolutePath,
-                    plagaDetectada = resultado.label,
-                    confianza = resultado.confidence,
-                    nivelSeveridad = recomendacion.nivelSeveridad,
-                    recomendacion = recomendacion.tratamiento
-                )
-            )
+        FileOutputStream(archivo).use {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
         }
+
+        val recomendacion = MotorRecomendaciones.obtener(resultado.label)
+
+        dao.insertar(
+            Diagnostico(
+                id = id,
+                usuarioId = USUARIO_LOCAL,
+                parcelaId = parcelaId, // CAMBIO 2: Se asigna el id de la parcela asociada
+                rutaFoto = archivo.absolutePath,
+                plagaDetectada = resultado.label,
+                confianza = resultado.confidence,
+                nivelSeveridad = recomendacion.nivelSeveridad,
+                recomendacion = recomendacion.tratamiento
+            )
+        )
+    }
 
     suspend fun limpiarHistorial() = withContext(Dispatchers.IO) {
         // Elimina los archivos de fotos locales
