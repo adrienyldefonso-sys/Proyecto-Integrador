@@ -2,8 +2,8 @@ package com.yldefonso.ojodchakra.data.repository
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.yldefonso.ojodchakra.data.local.AppDatabase
 import com.yldefonso.ojodchakra.data.model.Diagnostico
+import com.yldefonso.ojodchakra.local.AppDatabase
 import com.yldefonso.ojodchakra.ml.ClassificationResult
 import com.yldefonso.ojodchakra.ml.MotorRecomendaciones
 import kotlinx.coroutines.Dispatchers
