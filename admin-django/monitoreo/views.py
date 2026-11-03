@@ -1,6 +1,6 @@
 from datetime import datetime, time
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -37,10 +37,14 @@ class ParcelaListView(ListAPIView):
 
 class HistorialParcelaView(APIView):
     def get(self, request, parcela_id):
+        # Permite buscar la parcela con o sin guiones en la URL
+        parcela_id_clean = str(parcela_id).replace("-", "")
         parcela = get_object_or_404(
-            Parcela.objects.select_related("usuario"), pk=parcela_id
+            Parcela.objects.select_related("usuario"),
+            Q(pk=parcela_id) | Q(pk=parcela_id_clean),
         )
-        # Ordenamiento descendente para traer del más reciente al más antiguo
+
+        # Ordenamiento descendente (del más reciente al más antiguo)
         diagnosticos = parcela.diagnosticos.order_by("-fecha_captura")
 
         desde = request.query_params.get("desde")
