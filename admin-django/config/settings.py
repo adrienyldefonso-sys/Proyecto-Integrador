@@ -101,3 +101,6 @@ REST_FRAMEWORK = {
     ],
     "COERCE_DECIMAL_TO_STRING": False,
 }
+
+# Panel web en desarrollo (React con Vite, que reenvía las peticiones a Django)
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]

@@ -1,6 +1,6 @@
 from datetime import datetime, time
 
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Parcela
+from .permisos import EsAgronomo
 from .serializers import DiagnosticoSerializer, ParcelaSerializer
 
 
@@ -26,6 +27,7 @@ def _limite(texto, nombre, final):
 
 class ParcelaListView(ListAPIView):
     serializer_class = ParcelaSerializer
+    permission_classes = [EsAgronomo]
 
     def get_queryset(self):
         return (
@@ -36,15 +38,13 @@ class ParcelaListView(ListAPIView):
 
 
 class HistorialParcelaView(APIView):
-    def get(self, request, parcela_id):
-        # Permite buscar la parcela con o sin guiones en la URL
-        parcela_id_clean = str(parcela_id).replace("-", "")
-        parcela = get_object_or_404(
-            Parcela.objects.select_related("usuario"),
-            Q(pk=parcela_id) | Q(pk=parcela_id_clean),
-        )
+    permission_classes = [EsAgronomo]
 
-        # Ordenamiento descendente (del más reciente al más antiguo)
+    def get(self, request, parcela_id):
+        parcela = get_object_or_404(
+            Parcela.objects.select_related("usuario"), pk=parcela_id
+        )
+        # Ordenamiento descendente para traer del más reciente al más antiguo
         diagnosticos = parcela.diagnosticos.order_by("-fecha_captura")
 
         desde = request.query_params.get("desde")
