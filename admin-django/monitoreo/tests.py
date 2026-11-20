@@ -127,3 +127,19 @@ class HistorialParcelaTests(APITestCase):
 
         fila = next(p for p in r.data if p["id"] == str(self.parcela.id))
         self.assertEqual(fila["total_diagnosticos"], 2)
+
+    def test_agricultor_no_puede_consultar_el_historial(self):
+        self.client.force_authenticate(self.agricultor)
+        r = self.client.get(self._url(self.parcela))
+        self.assertEqual(r.status_code, 403)
+
+    def test_agricultor_no_puede_listar_parcelas(self):
+        self.client.force_authenticate(self.agricultor)
+        r = self.client.get(reverse("parcelas"))
+        self.assertEqual(r.status_code, 403)
+
+    def test_superusuario_puede_consultar(self):
+        admin = Usuario.objects.create_superuser(username="root", password="x")
+        self.client.force_authenticate(admin)
+        r = self.client.get(self._url(self.parcela))
+        self.assertEqual(r.status_code, 200)
