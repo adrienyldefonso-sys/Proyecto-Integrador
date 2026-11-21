@@ -1,6 +1,5 @@
 import random
 from datetime import timedelta
-from decimal import Decimal
 from io import BytesIO
 
 from django.core.files.base import ContentFile
@@ -29,8 +28,8 @@ CASOS = {
 }
 
 PARCELAS = [
-    ("Finca Sol Naciente", "Papa", "Chosica", "-11.9333000", "-76.7000000"),
-    ("Chacra Los Andes", "Papa", "Huarochirí", "-12.1300000", "-76.2300000"),
+    ("Finca Sol Naciente", "Papa", "Chosica", -11.9333, -76.7),
+    ("Chacra Los Andes", "Papa", "Huarochirí", -12.13, -76.23),
 ]
 
 
@@ -68,7 +67,7 @@ class Command(BaseCommand):
             defaults={
                 "first_name": "Luis",
                 "last_name": "Quispe",
-                "celular": "999888777",
+                "telefono": "999888777",
                 "rol": Usuario.Rol.AGRICULTOR,
             },
         )
@@ -83,8 +82,8 @@ class Command(BaseCommand):
                 defaults={
                     "cultivo": cultivo,
                     "referencia": referencia,
-                    "latitud": Decimal(lat),
-                    "longitud": Decimal(lon),
+                    "latitud": lat,
+                    "longitud": lon,
                 },
             )
             if parcela.diagnosticos.exists():
