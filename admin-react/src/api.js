@@ -41,3 +41,5 @@ export function obtenerHistorial(parcelaId, { desde = '', hasta = '' } = {}) {
   const consulta = parametros.toString()
   return pedir(`/api/parcelas/${parcelaId}/historial/${consulta ? `?${consulta}` : ''}`)
 }
+
+export const obtenerAlertas = () => pedir('/api/alertas/')
