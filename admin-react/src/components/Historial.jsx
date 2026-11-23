@@ -10,32 +10,70 @@ import {
 import AvisoAcceso from './AvisoAcceso'
 import FotoEvidencia from './FotoEvidencia'
 
+const REFRESCO_MS = 30000
+
 export default function Historial({ parcelaId }) {
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
-  const [intento, setIntento] = useState(0)
+  const [version, setVersion] = useState(0)
   const [resultado, setResultado] = useState({ clave: null })
+  const [actualizado, setActualizado] = useState(null)
 
-  const clave = `${parcelaId}|${desde}|${hasta}|${intento}`
+  // La clave solo cambia con la parcela y los filtros: un refresco no vuelve a mostrar "Cargando"
+  const clave = `${parcelaId}|${desde}|${hasta}`
 
   useEffect(() => {
     let vigente = true
     obtenerHistorial(parcelaId, { desde, hasta })
-      .then((datos) => vigente && setResultado({ clave, datos }))
-      .catch((error) => vigente && setResultado({ clave, error }))
+      .then((datos) => {
+        if (!vigente) return
+        setResultado({ clave, datos })
+        setActualizado(new Date())
+      })
+      .catch((error) => {
+        if (!vigente) return
+        // Si falla un refresco silencioso, se conserva lo que ya se estaba mostrando
+        setResultado((previo) =>
+          previo.clave === clave && previo.datos ? previo : { clave, error },
+        )
+      })
     return () => {
       vigente = false
     }
-  }, [clave, parcelaId, desde, hasta])
+  }, [clave, parcelaId, desde, hasta, version])
+
+  useEffect(() => {
+    const temporizador = setInterval(() => {
+      if (!document.hidden) setVersion((n) => n + 1)
+    }, REFRESCO_MS)
+    return () => clearInterval(temporizador)
+  }, [])
 
   const cargando = resultado.clave !== clave
   const { datos, error } = resultado
-  const reintentar = () => setIntento((n) => n + 1)
+  const actualizar = () => setVersion((n) => n + 1)
   const rangoInvalido = desde && hasta && desde > hasta
 
   return (
     <section className="panel">
-      <h2>{datos && !cargando ? datos.parcela.nombre : 'Historial'}</h2>
+      <div className="barra">
+        <h2>{datos && !cargando ? datos.parcela.nombre : 'Historial'}</h2>
+        <div className="acciones">
+          {actualizado && (
+            <span className="muted">
+              Actualizado a las{' '}
+              {actualizado.toLocaleTimeString('es-PE', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'America/Lima',
+              })}
+            </span>
+          )}
+          <button type="button" className="boton secundario" onClick={actualizar}>
+            Actualizar
+          </button>
+        </div>
+      </div>
 
       <div className="filtros">
         <label>
@@ -65,11 +103,11 @@ export default function Historial({ parcelaId }) {
 
       {!cargando && error &&
         (esSinAcceso(error) ? (
-          <AvisoAcceso mensaje={error.message} onReintentar={reintentar} />
+          <AvisoAcceso mensaje={error.message} onReintentar={actualizar} />
         ) : (
           <div className="aviso">
             <p>{error.message}</p>
-            <button type="button" className="boton" onClick={reintentar}>
+            <button type="button" className="boton" onClick={actualizar}>
               Reintentar
             </button>
           </div>
@@ -101,21 +139,22 @@ export default function Historial({ parcelaId }) {
             <ol className="linea">
               {datos.diagnosticos.map((d) => {
                 const nivel = nivelSeveridad(d.nivel_severidad)
-                console.log('Diagnóstico:', d)
+                const plaga = d.plaga_nombre || nombrePlaga(d.plaga_detectada)
                 return (
                   <li key={d.id} className={`evento sev-${nivel.clave}`}>
                     <span className="punto" />
                     <div className="encabezado">
-                      <strong>{d.plaga_nombre || nombrePlaga(d.plaga_detectada)}</strong>
+                      <strong>{plaga}</strong>
                       <span className={`etiqueta sev-${nivel.clave}`}>{nivel.texto}</span>
                     </div>
                     <p className="muted">
-                      {formatearFecha(d.fecha_captura)} · Confianza {formatearConfianza(d.confianza)}
+                      {formatearFecha(d.fecha_captura)} · Confianza{' '}
+                      {formatearConfianza(d.confianza)}
                     </p>
                     {d.recomendacion && <p>{d.recomendacion}</p>}
                     <FotoEvidencia
                       url={d.foto_url}
-                      descripcion={`${d.plaga_nombre || nombrePlaga(d.plaga_detectada)} · ${formatearFecha(d.fecha_captura)}`}
+                      descripcion={`${plaga} · ${formatearFecha(d.fecha_captura)}`}
                     />
                   </li>
                 )
