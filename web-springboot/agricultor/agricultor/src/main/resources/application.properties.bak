@@ -11,3 +11,12 @@ spring.datasource.password=${DB_PASSWORD:}
 # Las tablas las crean las migraciones de Django: Hibernate nunca debe crearlas ni cambiarlas.
 spring.jpa.hibernate.ddl-auto=none
 spring.jpa.open-in-view=false
+
+# Clave provisional de la app móvil. Se reemplazará por el inicio de sesión del agricultor.
+app.api-key=${API_KEY:dev-demo-key}
+
+# Carpeta media de Django: las fotos que guarda Spring Boot son las que muestra el panel.
+app.media-dir=${MEDIA_DIR:../admin-django/media}
+
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=11MB
