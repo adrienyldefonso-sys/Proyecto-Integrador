@@ -20,6 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun diagnosticoDao(): DiagnosticoDao
     abstract fun parcelaDao(): ParcelaDao
+    abstract fun sincronizacionDao(): SincronizacionDao
 
     companion object {
         @Volatile
