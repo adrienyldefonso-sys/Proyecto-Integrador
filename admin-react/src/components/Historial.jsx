@@ -8,6 +8,7 @@ import {
   textoConteo,
 } from '../formato'
 import AvisoAcceso from './AvisoAcceso'
+import FotoEvidencia from './FotoEvidencia'
 
 export default function Historial({ parcelaId }) {
   const [desde, setDesde] = useState('')
@@ -111,6 +112,10 @@ export default function Historial({ parcelaId }) {
                       {formatearFecha(d.fecha_captura)} · Confianza {formatearConfianza(d.confianza)}
                     </p>
                     {d.recomendacion && <p>{d.recomendacion}</p>}
+                    <FotoEvidencia
+                      url={d.foto_url}
+                      descripcion={`${d.plaga_nombre || nombrePlaga(d.plaga_detectada)} · ${formatearFecha(d.fecha_captura)}`}
+                    />
                   </li>
                 )
               })}
