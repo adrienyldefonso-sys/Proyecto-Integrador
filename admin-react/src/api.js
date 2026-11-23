@@ -43,3 +43,13 @@ export function obtenerHistorial(parcelaId, { desde = '', hasta = '' } = {}) {
 }
 
 export const obtenerAlertas = () => pedir('/api/alertas/')
+
+// Convierte la URL absoluta que entrega la API en una ruta que pasa por el proxy de Vite
+export function rutaDeFoto(url) {
+  if (!url) return null
+  try {
+    return new URL(url, 'http://base.local').pathname
+  } catch {
+    return null
+  }
+}

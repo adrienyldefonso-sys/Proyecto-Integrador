@@ -344,3 +344,56 @@ body {
   color: var(--verde);
   margin-bottom: 8px;
 }
+
+.miniatura {
+  display: block;
+  margin-top: 8px;
+  width: 140px;
+  height: 100px;
+  padding: 0;
+  border: 1px solid rgba(46, 106, 56, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--sutil);
+  cursor: zoom-in;
+}
+.miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sin-foto {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.visor {
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  max-width: 92vw;
+  background: #fff;
+}
+.visor::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+.visor img {
+  display: block;
+  max-width: 92vw;
+  max-height: 75vh;
+  object-fit: contain;
+  background: #111;
+}
+.visor-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+.visor-pie span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}

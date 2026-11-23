@@ -101,6 +101,7 @@ export default function Historial({ parcelaId }) {
             <ol className="linea">
               {datos.diagnosticos.map((d) => {
                 const nivel = nivelSeveridad(d.nivel_severidad)
+                console.log('Diagnóstico:', d)
                 return (
                   <li key={d.id} className={`evento sev-${nivel.clave}`}>
                     <span className="punto" />
