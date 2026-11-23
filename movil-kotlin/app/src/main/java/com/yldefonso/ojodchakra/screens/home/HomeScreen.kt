@@ -29,6 +29,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yldefonso.ojodchakra.R
+import com.yldefonso.ojodchakra.screens.sincronizacion.TarjetaSincronizacion
 
 // Paleta de Colores Limpia y Orgánica (AgriTech)
 private val VerdePrincipal = Color(0xFF2E6A38)
@@ -376,6 +377,9 @@ fun HomeScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            TarjetaSincronizacion(modifier = Modifier.padding(horizontal = 24.dp))
         }
 
         // ==========================================
