@@ -8,6 +8,7 @@ import {
   textoConteo,
 } from '../formato'
 import AvisoAcceso from './AvisoAcceso'
+import FotoEvidencia from './FotoEvidencia'
 
 export default function Historial({ parcelaId }) {
   const [desde, setDesde] = useState('')
@@ -100,6 +101,7 @@ export default function Historial({ parcelaId }) {
             <ol className="linea">
               {datos.diagnosticos.map((d) => {
                 const nivel = nivelSeveridad(d.nivel_severidad)
+                console.log('Diagnóstico:', d)
                 return (
                   <li key={d.id} className={`evento sev-${nivel.clave}`}>
                     <span className="punto" />
@@ -111,6 +113,10 @@ export default function Historial({ parcelaId }) {
                       {formatearFecha(d.fecha_captura)} · Confianza {formatearConfianza(d.confianza)}
                     </p>
                     {d.recomendacion && <p>{d.recomendacion}</p>}
+                    <FotoEvidencia
+                      url={d.foto_url}
+                      descripcion={`${d.plaga_nombre || nombrePlaga(d.plaga_detectada)} · ${formatearFecha(d.fecha_captura)}`}
+                    />
                   </li>
                 )
               })}
