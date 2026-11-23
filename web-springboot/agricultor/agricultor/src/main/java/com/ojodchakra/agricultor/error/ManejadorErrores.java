@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.io.UncheckedIOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -39,6 +40,14 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(
                 HttpStatus.CONFLICT, "No se pudo guardar por un conflicto con datos existentes.");
         problema.setTitle("Conflicto");
+        return problema;
+    }
+
+    @ExceptionHandler(UncheckedIOException.class)
+    public ProblemDetail errorDeArchivo(UncheckedIOException e) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR, "No se pudo guardar la foto en el servidor.");
+        problema.setTitle("Error al guardar la foto");
         return problema;
     }
 
