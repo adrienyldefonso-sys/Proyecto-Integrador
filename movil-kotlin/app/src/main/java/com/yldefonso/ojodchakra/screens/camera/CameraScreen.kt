@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.yldefonso.ojodchakra.ml.DecisionHoja
 import com.yldefonso.ojodchakra.ml.PlagaClassifier
 import java.util.concurrent.Executors
 
@@ -190,6 +191,24 @@ fun CameraScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    viewModel.mensajeRechazo.value?.let { mensaje ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFFFF3E0)
+                        ) {
+                            Text(
+                                text = mensaje,
+                                color = Color(0xFFE65100),
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
                     // Botón circular obturador
                     Surface(
                         modifier = Modifier
@@ -208,12 +227,19 @@ fun CameraScreen(
                                             image.close()
 
                                             val classifier = PlagaClassifier(context)
-                                            val result = classifier.classify(bitmap)
+                                            val resultado = classifier.classify(bitmap)
 
                                             mainExecutor.execute {
-                                                viewModel.onPhotoCaptured(bitmap)
-                                                viewModel.onResultReady(result)
-                                                onDiagnosisReady()
+                                                when (val veredicto = DecisionHoja.evaluar(resultado)) {
+                                                    is DecisionHoja.Veredicto.Aceptada -> {
+                                                        viewModel.limpiarRechazo()
+                                                        viewModel.onPhotoCaptured(bitmap)
+                                                        viewModel.onResultReady(veredicto.resultado)
+                                                        onDiagnosisReady()
+                                                    }
+                                                    is DecisionHoja.Veredicto.Rechazada ->
+                                                        viewModel.onRechazada(DecisionHoja.mensaje(veredicto.motivo))
+                                                }
                                                 isCapturing = false
                                             }
                                         }

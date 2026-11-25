@@ -22,6 +22,10 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     private val _result = mutableStateOf<ClassificationResult?>(null)
     val result: State<ClassificationResult?> = _result
 
+    // Aviso cuando la foto no es una hoja de papa o no se identificó con seguridad
+    private val _mensajeRechazo = mutableStateOf<String?>(null)
+    val mensajeRechazo: State<String?> = _mensajeRechazo
+
     // Parcela elegida antes de escanear. null significa escaneo sin parcela.
     private var parcelaId: String? = null
     private val _parcelaNombre = mutableStateOf<String?>(null)
@@ -30,6 +34,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     fun seleccionarParcela(id: String?) {
         parcelaId = id
         _parcelaNombre.value = null
+        _mensajeRechazo.value = null
         if (id != null) {
             viewModelScope.launch {
                 val nombre = parcelaRepository.obtenerPorId(id)?.nombre
@@ -50,9 +55,21 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch { repository.guardar(bitmap, result, parcela) }
     }
 
-    // Limpia la foto y el resultado. La parcela se conserva para "Escanear otra vez".
+    // La foto no se acepta: no hay resultado, no se guarda nada y se muestra el aviso
+    fun onRechazada(mensaje: String) {
+        _capturedBitmap.value = null
+        _result.value = null
+        _mensajeRechazo.value = mensaje
+    }
+
+    fun limpiarRechazo() {
+        _mensajeRechazo.value = null
+    }
+
+    // Limpia la foto, el resultado y el aviso. La parcela se conserva para "Escanear otra vez".
     fun reset() {
         _capturedBitmap.value = null
         _result.value = null
+        _mensajeRechazo.value = null
     }
 }
