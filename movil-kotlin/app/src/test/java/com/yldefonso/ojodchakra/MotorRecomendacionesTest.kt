@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import com.yldefonso.ojodchakra.ml.DecisionHoja
 
 class MotorRecomendacionesTest {
 
@@ -17,7 +18,7 @@ class MotorRecomendacionesTest {
     @Test
     fun cadaEtiquetaDelModeloTieneSuRecomendacion() {
         assertTrue("labels.txt está vacío", etiquetas.isNotEmpty())
-        etiquetas.forEach { etiqueta ->
+        etiquetas.filter { it != DecisionHoja.ETIQUETA_RECHAZO }.forEach { etiqueta ->
             val r = MotorRecomendaciones.obtener(etiqueta)
             assertEquals("Falta recomendación para $etiqueta", etiqueta, r.plagaClave)
             assertTrue("Tratamiento vacío para $etiqueta", r.tratamiento.isNotBlank())
