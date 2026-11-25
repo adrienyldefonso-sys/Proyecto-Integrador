@@ -9,5 +9,6 @@ if (-not (Test-NetConnection -ComputerName 127.0.0.1 -Port 3306 -InformationLeve
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$host.UI.RawUI.WindowTitle='Django'; cd '$raiz\admin-django'; .\venv312\Scripts\Activate.ps1; python manage.py runserver"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$host.UI.RawUI.WindowTitle='React'; cd '$raiz\admin-react'; npm run dev"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$host.UI.RawUI.WindowTitle='Spring Boot'; `$env:MEDIA_DIR='$raiz\admin-django\media'; cd '$raiz\web-springboot\agricultor\agricultor'; .\mvnw.cmd spring-boot:run"
-
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+if (Test-Path $adb) { & $adb reverse tcp:8080 tcp:8080 }
 Write-Host "Servidores iniciados. Panel: http://localhost:5173  |  Django: http://127.0.0.1:8000/admin/  |  API: http://127.0.0.1:8080/api/parcelas"
