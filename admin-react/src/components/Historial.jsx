@@ -9,8 +9,11 @@ import {
 } from '../formato'
 import AvisoAcceso from './AvisoAcceso'
 import FotoEvidencia from './FotoEvidencia'
+<<<<<<< HEAD
+=======
 
 const REFRESCO_MS = 30000
+>>>>>>> main
 
 export default function Historial({ parcelaId }) {
   const [desde, setDesde] = useState('')
@@ -139,7 +142,11 @@ export default function Historial({ parcelaId }) {
             <ol className="linea">
               {datos.diagnosticos.map((d) => {
                 const nivel = nivelSeveridad(d.nivel_severidad)
+<<<<<<< HEAD
+                console.log('Diagnóstico:', d)
+=======
                 const plaga = d.plaga_nombre || nombrePlaga(d.plaga_detectada)
+>>>>>>> main
                 return (
                   <li key={d.id} className={`evento sev-${nivel.clave}`}>
                     <span className="punto" />
@@ -152,6 +159,11 @@ export default function Historial({ parcelaId }) {
                       {formatearConfianza(d.confianza)}
                     </p>
                     {d.recomendacion && <p>{d.recomendacion}</p>}
+<<<<<<< HEAD
+                    <FotoEvidencia
+                      url={d.foto_url}
+                      descripcion={`${d.plaga_nombre || nombrePlaga(d.plaga_detectada)} · ${formatearFecha(d.fecha_captura)}`}
+=======
                     {d.estado_revision && d.estado_revision !== 'NINGUNA' && (
                       <p>
                         <span className="chip">
@@ -166,6 +178,7 @@ export default function Historial({ parcelaId }) {
                     <FotoEvidencia
                       url={d.foto_url}
                       descripcion={`${plaga} · ${formatearFecha(d.fecha_captura)}`}
+>>>>>>> main
                     />
                   </li>
                 )

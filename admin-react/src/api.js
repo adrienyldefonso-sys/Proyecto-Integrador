@@ -44,6 +44,17 @@ export function obtenerHistorial(parcelaId, { desde = '', hasta = '' } = {}) {
 
 export const obtenerAlertas = () => pedir('/api/alertas/')
 
+<<<<<<< HEAD
+// Convierte la URL absoluta que entrega la API en una ruta que pasa por el proxy de Vite
+export function rutaDeFoto(url) {
+  if (!url) return null
+  try {
+    return new URL(url, 'http://base.local').pathname
+  } catch {
+    return null
+  }
+}
+=======
 export const obtenerSesion = () => pedir('/api/sesion/')
 
 export const obtenerRevisiones = (estado = 'pendientes') =>
@@ -81,3 +92,4 @@ export async function decidirRevision(diagnosticoId, datos) {
   if (!respuesta.ok) throw new ErrorApi(respuesta.status, mensajeDeError(cuerpo))
   return cuerpo
 }
+>>>>>>> main
