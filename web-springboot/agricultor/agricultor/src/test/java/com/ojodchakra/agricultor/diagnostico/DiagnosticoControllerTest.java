@@ -40,6 +40,9 @@ class DiagnosticoControllerTest {
     @MockitoBean
     private DiagnosticoServicio servicio;
 
+    @MockitoBean
+    private com.ojodchakra.agricultor.autenticacion.AuthServicio autenticacion;
+
     private MockMultipartFile datos(String json) {
         return new MockMultipartFile("datos", "datos.json", "application/json",
                 json.getBytes(StandardCharsets.UTF_8));

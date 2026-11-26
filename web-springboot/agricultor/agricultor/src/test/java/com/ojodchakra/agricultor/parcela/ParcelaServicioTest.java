@@ -108,4 +108,29 @@ class ParcelaServicioTest {
         assertThrows(SolicitudInvalidaException.class,
                 () -> servicio.registrar(solicitud(), "127.0.0.1"));
     }
+
+    @Test
+    void unaParcelaSinCoordenadasSeCreaSinUbicacion() {
+        when(parcelas.findById(any())).thenReturn(Optional.empty());
+        when(usuarios.findById("u1")).thenReturn(Optional.of(new Usuario("u1", true)));
+        ParcelaSolicitud sinUbicacion = new ParcelaSolicitud(ID, "u1", "Finca", "Papa", "",
+                null, null, Instant.parse("2026-11-21T18:00:00Z"));
+
+        ParcelaServicio.Resultado resultado = servicio.registrar(sinUbicacion, "127.0.0.1");
+
+        assertTrue(resultado.creada());
+        assertNull(resultado.parcela().getLatitud());
+        assertNull(resultado.parcela().getLongitud());
+        verify(parcelas).saveAndFlush(any(Parcela.class));
+    }
+
+    @Test
+    void soloUnaCoordenadaSeRechazaYNoSeGuardaNada() {
+        ParcelaSolicitud soloLatitud = new ParcelaSolicitud(ID, "u1", "Finca", "Papa", "",
+                -12.05, null, Instant.parse("2026-11-21T18:00:00Z"));
+
+        assertThrows(SolicitudInvalidaException.class,
+                () -> servicio.registrar(soloLatitud, "127.0.0.1"));
+        verify(parcelas, never()).saveAndFlush(any(Parcela.class));
+    }
 }

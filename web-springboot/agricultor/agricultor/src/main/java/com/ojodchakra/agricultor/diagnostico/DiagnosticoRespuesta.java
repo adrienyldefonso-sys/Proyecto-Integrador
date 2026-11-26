@@ -12,7 +12,11 @@ public record DiagnosticoRespuesta(
         Double confianza,
         String nivelSeveridad,
         String recomendacion,
-        Instant fechaCaptura) {
+        Instant fechaCaptura,
+        String estadoRevision,
+        String etiquetaValidada,
+        String observacionAgronomo,
+        Instant fechaRevision) {
 
     public static DiagnosticoRespuesta desde(Diagnostico d) {
         return new DiagnosticoRespuesta(
@@ -24,7 +28,11 @@ public record DiagnosticoRespuesta(
                 d.getConfianza(),
                 vacioANulo(d.getNivelSeveridad()),
                 vacioANulo(d.getRecomendacion()),
-                d.getFechaCaptura().toInstant(ZoneOffset.UTC));
+                d.getFechaCaptura().toInstant(ZoneOffset.UTC),
+                d.getEstadoRevision(),
+                vacioANulo(d.getEtiquetaValidada()),
+                vacioANulo(d.getObservacionAgronomo()),
+                d.getFechaRevision() == null ? null : d.getFechaRevision().toInstant(ZoneOffset.UTC));
     }
 
     private static String vacioANulo(String texto) {

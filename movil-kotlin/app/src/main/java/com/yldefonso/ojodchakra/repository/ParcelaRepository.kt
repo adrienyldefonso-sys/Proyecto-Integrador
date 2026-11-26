@@ -3,6 +3,7 @@ package com.yldefonso.ojodchakra.repository
 import android.content.Context
 import com.yldefonso.ojodchakra.data.model.Parcela
 import com.yldefonso.ojodchakra.data.model.ParcelaConConteo
+import com.yldefonso.ojodchakra.data.model.ParcelaEnMapa
 import com.yldefonso.ojodchakra.local.AppDatabase
 import kotlinx.coroutines.flow.Flow
 
@@ -12,14 +13,17 @@ class ParcelaRepository(context: Context) {
 
     val parcelas: Flow<List<ParcelaConConteo>> = dao.observarConConteo(USUARIO_LOCAL)
 
+    val parcelasEnMapa: Flow<List<ParcelaEnMapa>> = dao.observarParaMapa(USUARIO_LOCAL)
+
     suspend fun obtenerPorId(id: String): Parcela? = dao.obtenerPorId(id)
 
+    // Las coordenadas son opcionales: null significa "sin ubicación por ahora"
     suspend fun registrar(
         nombre: String,
         cultivo: String,
         referencia: String,
-        latitud: Double,
-        longitud: Double
+        latitud: Double?,
+        longitud: Double?
     ): String {
         val parcela = Parcela(
             usuarioId = USUARIO_LOCAL,

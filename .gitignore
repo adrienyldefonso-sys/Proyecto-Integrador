@@ -19,3 +19,10 @@ build/
 local.properties
 *.iml
 captures/
+
+# Añadido al preparar el commit: entornos y cachés locales
+admin-django/venv*/
+movil-kotlin/.kotlin/
+*.bak
+/web-springboot/datos.json
+/web-springboot/agricultor/admin-django/

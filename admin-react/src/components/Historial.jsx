@@ -152,6 +152,17 @@ export default function Historial({ parcelaId }) {
                       {formatearConfianza(d.confianza)}
                     </p>
                     {d.recomendacion && <p>{d.recomendacion}</p>}
+                    {d.estado_revision && d.estado_revision !== 'NINGUNA' && (
+                      <p>
+                        <span className="chip">
+                          {d.estado_revision === 'SOLICITADA' && 'Revisión solicitada'}
+                          {d.estado_revision === 'CONFIRMADA' && 'Confirmado por agrónomo'}
+                          {d.estado_revision === 'CORREGIDA' &&
+                            `Corregido por agrónomo: ${d.etiqueta_validada_nombre}`}
+                        </span>
+                      </p>
+                    )}
+                    {d.observacion_agronomo && <p className="muted">“{d.observacion_agronomo}”</p>}
                     <FotoEvidencia
                       url={d.foto_url}
                       descripcion={`${plaga} · ${formatearFecha(d.fecha_captura)}`}

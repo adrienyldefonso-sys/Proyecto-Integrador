@@ -10,8 +10,12 @@ object FormatoParcela {
         else -> "$total diagnósticos"
     }
 
-    fun coordenadas(latitud: Double, longitud: Double): String =
-        String.format(Locale.US, "%.5f, %.5f", latitud, longitud)
+    fun coordenadas(latitud: Double?, longitud: Double?): String =
+        if (latitud == null || longitud == null) {
+            "Sin coordenadas"
+        } else {
+            String.format(Locale.US, "%.5f, %.5f", latitud, longitud)
+        }
 
     fun textoGuardado(nombreParcela: String?): String =
         if (nombreParcela.isNullOrBlank()) {

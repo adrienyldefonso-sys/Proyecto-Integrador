@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.yldefonso.ojodchakra.local.AppDatabase
 import com.yldefonso.ojodchakra.red.ClienteApiHttp
+import com.yldefonso.ojodchakra.sesion.SesionUsuario
 import com.yldefonso.ojodchakra.sincronizacion.Sincronizador
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +60,10 @@ class SincronizacionViewModel(application: Application) : AndroidViewModel(appli
     }
 
     fun sincronizar() {
+        if (!SesionUsuario.cuentaActiva) {
+            _estado.update { it.copy(mensaje = "Inicia sesión para enviar tus datos.") }
+            return
+        }
         if (!bloqueo.tryLock()) return // ya hay una sincronización en curso
         viewModelScope.launch {
             try {

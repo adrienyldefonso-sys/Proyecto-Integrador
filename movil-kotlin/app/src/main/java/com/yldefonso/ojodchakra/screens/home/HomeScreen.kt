@@ -1,16 +1,25 @@
 package com.yldefonso.ojodchakra.screens.home
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
+import com.yldefonso.ojodchakra.ui.iconos.IconosOjoD
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,53 +31,57 @@ import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yldefonso.ojodchakra.R
 import com.yldefonso.ojodchakra.screens.sincronizacion.SincronizacionViewModel
 import com.yldefonso.ojodchakra.screens.sincronizacion.TarjetaSincronizacion
+import com.yldefonso.ojodchakra.ui.componentes.BotonPrincipal
+import com.yldefonso.ojodchakra.ui.componentes.EtiquetaSeccion
+import com.yldefonso.ojodchakra.ui.componentes.FondoCurvasNivel
+import com.yldefonso.ojodchakra.ui.componentes.Insignia
+import com.yldefonso.ojodchakra.ui.componentes.Tarjeta
+import com.yldefonso.ojodchakra.ui.componentes.TipoEstado
+import com.yldefonso.ojodchakra.ui.theme.LocalColoresApp
 import java.util.Calendar
 
-private val VerdePrincipal = Color(0xFF2E6A38)
-private val FondoPantalla = Color(0xFFFAFCFA)
-private val VerdeSubtil = Color(0xFFEBF3EC)
-private val TextoOscuro = Color(0xFF1B2E21)
-private val TextoMuted = Color(0xFF5A7060)
-private val Terracota = Color(0xFFA65A3A)
-private val AmbarTexto = Color(0xFF8D6E00)
-private val AmbarFondo = Color(0xFFFFF8E1)
-
 private fun saludoSegunLaHora(): String {
-    val hora = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    return when (hora) {
+    return when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
         in 5..11 -> "Buenos días"
         in 12..18 -> "Buenas tardes"
         else -> "Buenas noches"
     }
 }
 
+private val consejosFoto = listOf(
+    "Acércate para que la hoja llene casi todo el cuadro.",
+    "Usa luz natural o pareja, sin sombras fuertes.",
+    "Muestra una sola hoja, sin otros objetos alrededor."
+)
+
 @Composable
 fun HomeScreen(
     onStartScan: () -> Unit,
     onVerHistorial: () -> Unit,
     onVerParcelas: () -> Unit,
+    onAjustes: () -> Unit = {},
     homeViewModel: HomeViewModel = viewModel(),
     sincronizacionViewModel: SincronizacionViewModel = viewModel()
 ) {
@@ -81,112 +94,72 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoPantalla)
-            .statusBarsPadding()
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            CabeceraInicio(saludo = saludo, onAjustes = onAjustes)
 
-            // Encabezado
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LogoConOnda()
-                Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                PulsoEquipo(totalReportes = totalReportes, pendientes = pendientes)
+
                 Column {
-                    Text(text = saludo, fontSize = 14.sp, color = TextoMuted)
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(SpanStyle(color = VerdePrincipal)) { append("OJO") }
-                            withStyle(SpanStyle(color = Terracota)) { append("D") }
-                            withStyle(SpanStyle(color = VerdePrincipal)) { append("CHAKRA") }
-                        },
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = "Diagnóstico agrícola con inteligencia artificial",
-                        fontSize = 13.sp,
-                        lineHeight = 17.sp,
-                        color = TextoMuted
+                    EtiquetaSeccion("Tu campo")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TileParcelas(
+                            valor = totalParcelas,
+                            onClick = onVerParcelas,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TileReportes(
+                            valor = totalReportes,
+                            onClick = onVerHistorial,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Column {
+                    EtiquetaSeccion("Conexión")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TarjetaSincronizacion(
+                        pendientes = pendientes,
+                        estado = estadoSincronizacion,
+                        onSincronizar = sincronizacionViewModel::sincronizar
                     )
                 }
-            }
 
-            // Estado
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Chip(
-                    icono = Icons.Default.CheckCircle,
-                    texto = "IA offline lista",
-                    tinte = VerdePrincipal,
-                    fondo = VerdeSubtil
-                )
-                if (pendientes == 0) {
-                    Chip(
-                        icono = Icons.Default.CloudDone,
-                        texto = "Todo sincronizado",
-                        tinte = VerdePrincipal,
-                        fondo = VerdeSubtil
-                    )
-                } else {
-                    Chip(
-                        icono = Icons.Default.CloudOff,
-                        texto = "$pendientes por enviar",
-                        tinte = AmbarTexto,
-                        fondo = AmbarFondo
-                    )
+                Column {
+                    EtiquetaSeccion("Para una foto confiable")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(end = 4.dp)
+                    ) {
+                        itemsIndexed(consejosFoto) { indice, texto ->
+                            ConsejoTarjeta(numero = "%02d".format(indice + 1), texto = texto)
+                        }
+                    }
                 }
-            }
 
-            // Tu campo
-            Etiqueta("TU CAMPO")
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TarjetaResumen(
-                    icono = Icons.Default.LocationOn,
-                    valor = totalParcelas,
-                    etiqueta = if (totalParcelas == 1) "Parcela" else "Parcelas",
-                    descripcion = "Gestionar áreas de cultivo",
-                    onClick = onVerParcelas,
-                    modifier = Modifier.weight(1f)
-                )
-                TarjetaResumen(
-                    icono = Icons.Default.History,
-                    valor = totalReportes,
-                    etiqueta = if (totalReportes == 1) "Reporte" else "Reportes",
-                    descripcion = "Consultar el historial",
-                    onClick = onVerHistorial,
-                    modifier = Modifier.weight(1f)
+                Text(
+                    text = "OjoDChakra v1.0 · Proyecto Integrador · TECSUP",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp, bottom = 8.dp)
                 )
             }
-
-            // Conexión
-            Etiqueta("CONEXIÓN")
-            TarjetaSincronizacion(
-                pendientes = pendientes,
-                estado = estadoSincronizacion,
-                onSincronizar = sincronizacionViewModel::sincronizar
-            )
-
-            // Consejos
-            Etiqueta("BUENAS PRÁCTICAS")
-            ConsejosFoto()
-
-            Text(
-                text = "OjoDChakra v1.0 · Proyecto Integrador · TECSUP",
-                fontSize = 12.sp,
-                color = TextoMuted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 16.dp)
-            )
         }
 
         BarraEscanear(onClick = onStartScan)
@@ -194,215 +167,267 @@ fun HomeScreen(
 }
 
 @Composable
-private fun LogoConOnda() {
-    val transicion = rememberInfiniteTransition(label = "onda")
-    val pulso by transicion.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulso"
-    )
-
-    Box(
-        modifier = Modifier
-            .size(96.dp)
-            .drawBehind {
-                val radioMaximo = size.minDimension / 2f
-                drawCircle(color = VerdePrincipal.copy(alpha = 0.06f), radius = radioMaximo)
-                drawCircle(color = VerdePrincipal.copy(alpha = 0.10f), radius = radioMaximo * 0.82f)
-                drawCircle(
-                    color = VerdePrincipal.copy(alpha = 0.22f * (1f - pulso)),
-                    radius = radioMaximo * (0.60f + 0.40f * pulso),
-                    style = Stroke(width = 2.dp.toPx())
-                )
-            },
-        contentAlignment = Alignment.Center
+private fun CabeceraInicio(saludo: String, onAjustes: () -> Unit) {
+    val colores = LocalColoresApp.current
+    Surface(
+        color = colores.bandaFondo,
+        contentColor = colores.bandaTexto,
+        shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.logo_ojodchakra),
-            contentDescription = "Logotipo de OjoDChakra",
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(Color.White)
-        )
-    }
-}
-
-@Composable
-private fun Etiqueta(texto: String) {
-    Text(
-        text = texto,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 1.sp,
-        color = TextoMuted
-    )
-}
-
-@Composable
-private fun Chip(icono: ImageVector, texto: String, tinte: Color, fondo: Color) {
-    Surface(shape = RoundedCornerShape(50), color = fondo) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icono,
-                contentDescription = null,
-                tint = tinte,
-                modifier = Modifier.size(16.dp)
+        Box {
+            FondoCurvasNivel(
+                modifier = Modifier.matchParentSize(),
+                color = colores.bandaTexto.copy(alpha = 0.08f)
             )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = texto,
-                color = tinte,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 12.dp, top = 14.dp, bottom = 26.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_ojodchakra),
+                    contentDescription = "Logotipo de OjoDChakra",
+                    modifier = Modifier
+                        .size(58.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                )
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = saludo,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colores.bandaTexto.copy(alpha = 0.8f)
+                    )
+                    Text(
+                        text = "OjoDChakra",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = colores.bandaTexto
+                    )
+                    Text(
+                        text = "Diagnóstico de plagas en papa",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colores.bandaTexto.copy(alpha = 0.8f)
+                    )
+                }
+                IconButton(
+                    onClick = onAjustes,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(colores.bandaTexto.copy(alpha = 0.14f))
+                ) {
+                    Icon(
+                        imageVector = IconosOjoD.Ajustes,
+                        contentDescription = "Ajustes",
+                        tint = colores.bandaTexto
+                    )
+                }
+            }
         }
     }
 }
 
+/** Barra del equipo: qué parte de los reportes ya se envió y qué parte falta. */
 @Composable
-private fun TarjetaResumen(
-    icono: ImageVector,
-    valor: Int?,
-    etiqueta: String,
-    descripcion: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, VerdePrincipal.copy(alpha = 0.15f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(VerdeSubtil),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icono,
-                    contentDescription = null,
-                    tint = VerdePrincipal,
-                    modifier = Modifier.size(22.dp)
+private fun PulsoEquipo(totalReportes: Int?, pendientes: Int) {
+    val colores = LocalColoresApp.current
+    val total = totalReportes ?: 0
+    val pendientesAcotados = pendientes.coerceIn(0, maxOf(total, pendientes))
+    val enviados = (total - pendientesAcotados).coerceAtLeast(0)
+    val fraccionEnviada = if (total == 0) 1f else enviados.toFloat() / total
+
+    Tarjeta(padding = 18.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Estado del equipo",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "El análisis funciona aunque no haya señal",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = valor?.toString() ?: "–",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = TextoOscuro
+            Insignia(
+                texto = "Activo",
+                tipo = TipoEstado.EXITO,
+                icono = IconosOjoD.Verificado
             )
-            Text(
-                text = etiqueta,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextoOscuro
-            )
-            Text(text = descripcion, fontSize = 12.sp, color = TextoMuted)
         }
-    }
-}
 
-@Composable
-private fun ConsejosFoto() {
-    Surface(shape = RoundedCornerShape(20.dp), color = VerdeSubtil) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = "Para una foto confiable",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextoOscuro
-            )
-            ConsejoLinea("1", "Acércate: que la hoja llene casi todo el cuadro.")
-            ConsejoLinea("2", "Usa luz natural o pareja, sin sombras fuertes.")
-            ConsejoLinea("3", "Una sola hoja a la vez, sin otros objetos alrededor.")
-        }
-    }
-}
+        Spacer(modifier = Modifier.height(18.dp))
 
-@Composable
-private fun ConsejoLinea(numero: String, texto: String) {
-    Row(verticalAlignment = Alignment.Top) {
         Box(
             modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(VerdePrincipal),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(50))
+                .background(colores.alertaFondo)
         ) {
-            Text(
-                text = numero,
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraccionEnviada.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.primary)
             )
         }
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(text = texto, fontSize = 14.sp, color = TextoOscuro)
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                text = "$enviados enviados",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = if (pendientes == 0) "Todo al día" else "$pendientes por enviar",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (pendientes == 0) MaterialTheme.colorScheme.onSurfaceVariant else colores.alertaTexto
+            )
+        }
+    }
+}
+
+/** Parcelas: tarjeta en verde de marca para dar contraste. */
+@Composable
+private fun TileParcelas(valor: Int?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val contenido = MaterialTheme.colorScheme.onPrimary
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = contenido
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (valor == 1) "Parcela" else "Parcelas",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = contenido.copy(alpha = 0.85f)
+                )
+                Icon(
+                    imageVector = IconosOjoD.Parcela,
+                    contentDescription = null,
+                    tint = contenido,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = valor?.toString() ?: "–",
+                style = MaterialTheme.typography.displaySmall,
+                color = contenido
+            )
+            Text(
+                text = "Áreas de cultivo",
+                style = MaterialTheme.typography.bodySmall,
+                color = contenido.copy(alpha = 0.8f)
+            )
+        }
+    }
+}
+
+/** Reportes: tarjeta clara con sombra suave. */
+@Composable
+private fun TileReportes(valor: Int?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (valor == 1) "Reporte" else "Reportes",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Icon(
+                    imageVector = IconosOjoD.Historial,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = valor?.toString() ?: "–",
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "Diagnósticos guardados",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConsejoTarjeta(numero: String, texto: String) {
+    Surface(
+        modifier = Modifier.width(220.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                text = numero,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = texto,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 
 @Composable
 private fun BarraEscanear(onClick: () -> Unit) {
-    Surface(color = Color.White, shadowElevation = 12.dp) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(
+            BotonPrincipal(
+                texto = "Escanear hoja de cultivo",
                 onClick = onClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = VerdePrincipal,
-                    contentColor = Color.White
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "Escanear hoja de cultivo",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                icono = IconosOjoD.Escanear
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Funciona sin internet",
-                fontSize = 12.sp,
-                color = TextoMuted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp)
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

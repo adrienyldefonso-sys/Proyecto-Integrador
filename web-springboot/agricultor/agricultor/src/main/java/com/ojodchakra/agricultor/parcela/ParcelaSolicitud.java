@@ -30,12 +30,11 @@ public record ParcelaSolicitud(
         @Size(max = 255, message = "Máximo 255 caracteres")
         String referencia,
 
-        @NotNull(message = "La latitud es obligatoria")
+        // Opcionales: la parcela puede llegar sin ubicación. Deben venir ambas o ninguna (ver ParcelaServicio)
         @DecimalMin(value = "-90.0", message = "La latitud va de -90 a 90")
         @DecimalMax(value = "90.0", message = "La latitud va de -90 a 90")
         Double latitud,
 
-        @NotNull(message = "La longitud es obligatoria")
         @DecimalMin(value = "-180.0", message = "La longitud va de -180 a 180")
         @DecimalMax(value = "180.0", message = "La longitud va de -180 a 180")
         Double longitud,

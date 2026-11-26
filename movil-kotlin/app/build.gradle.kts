@@ -1,8 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") // <--- ¡AGREGA ESTA LÍNEA AQUÍ!
 }
+
+// Clave de Google Maps: se lee de local.properties y nunca se sube a Git
+val propiedadesLocales = Properties().apply {
+    val archivo = rootProject.file("local.properties")
+    if (archivo.exists()) archivo.inputStream().use { load(it) }
+}
+val mapsApiKey: String = propiedadesLocales.getProperty("MAPS_API_KEY") ?: ""
 
 android {
     namespace = "com.yldefonso.ojodchakra"
@@ -16,6 +25,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
@@ -51,9 +61,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.maps.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("androidx.room:room-runtime:2.8.5")
     implementation("androidx.room:room-ktx:2.8.5")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
     ksp("androidx.room:room-compiler:2.8.5")
     // =========================================================
     // NAVEGACIÓN Y VIEWMODEL EN JETPACK COMPOSE

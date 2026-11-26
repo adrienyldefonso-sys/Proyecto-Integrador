@@ -16,6 +16,10 @@ object ValidadorParcela {
     fun parsearCoordenada(texto: String): Double? =
         texto.trim().replace(',', '.').toDoubleOrNull()
 
+    /**
+     * Las coordenadas son opcionales: se aceptan ambas vacías (parcela sin ubicación).
+     * Si se escribe una, la otra también es obligatoria.
+     */
     fun validar(
         nombre: String,
         cultivo: String,
@@ -24,6 +28,9 @@ object ValidadorParcela {
     ): ErroresParcela {
         val lat = parsearCoordenada(latitud)
         val lon = parsearCoordenada(longitud)
+        val latVacia = latitud.isBlank()
+        val lonVacia = longitud.isBlank()
+        val sinUbicacion = latVacia && lonVacia
 
         return ErroresParcela(
             nombre = when {
@@ -37,11 +44,15 @@ object ValidadorParcela {
                 else -> null
             },
             latitud = when {
+                sinUbicacion -> null
+                latVacia -> "Completa la latitud o deja ambas coordenadas vacías"
                 lat == null -> "Ingresa una latitud válida"
                 lat !in -90.0..90.0 -> "La latitud va de -90 a 90"
                 else -> null
             },
             longitud = when {
+                sinUbicacion -> null
+                lonVacia -> "Completa la longitud o deja ambas coordenadas vacías"
                 lon == null -> "Ingresa una longitud válida"
                 lon !in -180.0..180.0 -> "La longitud va de -180 a 180"
                 else -> null

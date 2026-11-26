@@ -6,9 +6,12 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.yldefonso.ojodchakra.data.model.Diagnostico
 import com.yldefonso.ojodchakra.data.repository.DiagnosticoRepository
 import com.yldefonso.ojodchakra.ml.ClassificationResult
 import com.yldefonso.ojodchakra.repository.ParcelaRepository
+import com.yldefonso.ojodchakra.sincronizacion.ProgramadorSincronizacion
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class CameraViewModel(application: Application) : AndroidViewModel(application) {
@@ -22,7 +25,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     private val _result = mutableStateOf<ClassificationResult?>(null)
     val result: State<ClassificationResult?> = _result
 
-    // Aviso cuando la foto no es una hoja de papa o no se identificó con seguridad
+    // Aviso cuando la foto tiene mala calidad o no se identificó con seguridad
     private val _mensajeRechazo = mutableStateOf<String?>(null)
     val mensajeRechazo: State<String?> = _mensajeRechazo
 
@@ -31,6 +34,16 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     private val _parcelaNombre = mutableStateOf<String?>(null)
     val parcelaNombre: State<String?> = _parcelaNombre
 
+    // Diagnóstico guardado en este análisis
+    private val _diagnosticoId = mutableStateOf<String?>(null)
+    val diagnosticoId: State<String?> = _diagnosticoId
+
+    // Copia en Room del diagnóstico: se actualiza sola cuando cambia la revisión del agrónomo
+    private val _diagnosticoGuardado = mutableStateOf<Diagnostico?>(null)
+    val diagnosticoGuardado: State<Diagnostico?> = _diagnosticoGuardado
+
+    private var observacion: Job? = null
+
     fun seleccionarParcela(id: String?) {
         parcelaId = id
         _parcelaNombre.value = null
@@ -38,7 +51,6 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         if (id != null) {
             viewModelScope.launch {
                 val nombre = parcelaRepository.obtenerPorId(id)?.nombre
-                // Solo se aplica si sigue siendo la parcela elegida
                 if (parcelaId == id) _parcelaNombre.value = nombre
             }
         }
@@ -52,10 +64,27 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         _result.value = result
         val bitmap = _capturedBitmap.value ?: return
         val parcela = parcelaId
-        viewModelScope.launch { repository.guardar(bitmap, result, parcela) }
+        viewModelScope.launch {
+            val id = repository.guardar(bitmap, result, parcela)
+            _diagnosticoId.value = id
+            observarDiagnostico(id)
+            ProgramadorSincronizacion.sincronizarAhora(getApplication())
+        }
     }
 
-    // La foto no se acepta: no hay resultado, no se guarda nada y se muestra el aviso
+    private fun observarDiagnostico(id: String) {
+        observacion?.cancel()
+        observacion = viewModelScope.launch {
+            repository.observarPorId(id).collect { _diagnosticoGuardado.value = it }
+        }
+    }
+
+    // El agricultor no decide la plaga: solo pide que un agrónomo lo revise
+    fun solicitarRevision() {
+        val id = _diagnosticoId.value ?: return
+        viewModelScope.launch { repository.solicitarRevision(id) }
+    }
+
     fun onRechazada(mensaje: String) {
         _capturedBitmap.value = null
         _result.value = null
@@ -66,10 +95,14 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         _mensajeRechazo.value = null
     }
 
-    // Limpia la foto, el resultado y el aviso. La parcela se conserva para "Escanear otra vez".
+    // Limpia todo menos la parcela, que se conserva para "Escanear otra vez"
     fun reset() {
+        observacion?.cancel()
+        observacion = null
         _capturedBitmap.value = null
         _result.value = null
         _mensajeRechazo.value = null
+        _diagnosticoId.value = null
+        _diagnosticoGuardado.value = null
     }
 }

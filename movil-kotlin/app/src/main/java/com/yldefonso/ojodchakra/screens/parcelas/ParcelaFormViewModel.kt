@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.math.roundToInt
 
 data class ParcelaFormState(
     val nombre: String = "",
@@ -56,21 +57,44 @@ class ParcelaFormViewModel(application: Application) : AndroidViewModel(applicat
         it.copy(buscandoUbicacion = true, mensaje = null)
     }
 
-    fun onUbicacionObtenida(latitud: Double?, longitud: Double?) = _estado.update {
+    fun onUbicacionObtenida(
+        latitud: Double?,
+        longitud: Double?,
+        precisionMetros: Float? = null,
+        esGps: Boolean = false,
+        antiguedadMin: Int? = null
+    ) = _estado.update {
         if (latitud == null || longitud == null) {
             it.copy(
                 buscandoUbicacion = false,
-                mensaje = "No se pudo obtener la ubicación. Activa el GPS o escribe las coordenadas a mano."
+                mensaje = "No se pudo obtener la ubicación. Escribe las coordenadas a mano."
             )
         } else {
+            val origen = if (esGps) "GPS" else "red"
+            val precision = precisionMetros?.let { " · precisión ±${it.roundToInt()} m" } ?: ""
+            val texto = if (antiguedadMin == null) {
+                "Ubicación actual por $origen$precision"
+            } else {
+                "Última posición guardada (hace $antiguedadMin min, $origen)$precision"
+            }
             it.copy(
                 buscandoUbicacion = false,
                 latitud = String.format(Locale.US, "%.6f", latitud),
                 longitud = String.format(Locale.US, "%.6f", longitud),
                 errores = it.errores.copy(latitud = null, longitud = null),
-                mensaje = null
+                mensaje = texto
             )
         }
+    }
+
+    // Tocar el mapa fija el punto de la parcela (solo aparece con internet)
+    fun onMapaTocado(latitud: Double, longitud: Double) = _estado.update {
+        it.copy(
+            latitud = String.format(Locale.US, "%.6f", latitud),
+            longitud = String.format(Locale.US, "%.6f", longitud),
+            errores = it.errores.copy(latitud = null, longitud = null),
+            mensaje = "Punto elegido en el mapa"
+        )
     }
 
     fun mostrarMensaje(texto: String) = _estado.update {
@@ -88,8 +112,9 @@ class ParcelaFormViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        val lat = ValidadorParcela.parsearCoordenada(actual.latitud) ?: return
-        val lon = ValidadorParcela.parsearCoordenada(actual.longitud) ?: return
+        // Las coordenadas son opcionales: si ambas están vacías, la parcela se guarda sin ubicación
+        val lat = actual.latitud.takeIf { it.isNotBlank() }?.let { ValidadorParcela.parsearCoordenada(it) }
+        val lon = actual.longitud.takeIf { it.isNotBlank() }?.let { ValidadorParcela.parsearCoordenada(it) }
 
         _estado.update { it.copy(guardando = true, mensaje = null) }
 
