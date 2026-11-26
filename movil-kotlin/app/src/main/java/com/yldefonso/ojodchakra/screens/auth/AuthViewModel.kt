@@ -95,7 +95,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     cargando = false
                 }
                 is ResultadoAuth.SinConexion -> {
-                    error = "Para crear tu cuenta necesitas internet. Mientras tanto puedes usar la app como invitado."
+                    error = "${resultado.mensaje} Revisa que Spring esté corriendo y que el emulador tenga adb reverse."
                     cargando = false
                 }
             }
