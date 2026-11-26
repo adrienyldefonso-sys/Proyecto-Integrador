@@ -40,5 +40,22 @@ public record DiagnosticoSolicitud(
         String recomendacion,
 
         @NotNull(message = "La fecha de captura es obligatoria")
-        Instant fechaCaptura) {
+        Instant fechaCaptura,
+
+        @Pattern(regexp = "^(NINGUNA|SOLICITADA)?$",
+                message = "La revisión debe ser NINGUNA o SOLICITADA")
+        String estadoRevision) {
+
+    /** Constructor de compatibilidad: sin revisión pedida. */
+    public DiagnosticoSolicitud(String id, String usuarioId, String parcelaId, String plagaDetectada,
+                                Double confianza, String nivelSeveridad, String recomendacion,
+                                Instant fechaCaptura) {
+        this(id, usuarioId, parcelaId, plagaDetectada, confianza, nivelSeveridad, recomendacion,
+                fechaCaptura, "NINGUNA");
+    }
+
+    /** true cuando la app pide que un agrónomo revise este diagnóstico. */
+    public boolean pideRevision() {
+        return "SOLICITADA".equals(estadoRevision);
+    }
 }

@@ -90,6 +90,29 @@ class Diagnostico(models.Model):
     recomendacion = models.TextField(blank=True, default="")
     fecha_captura = models.DateTimeField(default=timezone.now)
 
+    class EstadoRevision(models.TextChoices):
+        NINGUNA = "NINGUNA", "Sin revisión"
+        SOLICITADA = "SOLICITADA", "Revisión solicitada"
+        CONFIRMADA = "CONFIRMADA", "Confirmado por agrónomo"
+        CORREGIDA = "CORREGIDA", "Corregido por agrónomo"
+
+    # El agricultor solo puede pedir revisión. Confirmar o corregir lo hace el agrónomo.
+    estado_revision = models.CharField(
+        max_length=20,
+        choices=EstadoRevision.choices,
+        default=EstadoRevision.NINGUNA,
+    )
+    etiqueta_validada = models.CharField(max_length=150, blank=True, default="")
+    observacion_agronomo = models.TextField(blank=True, default="")
+    fecha_revision = models.DateTimeField(null=True, blank=True)
+    revisado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="revisiones",
+    )
+
     @property
     def plaga_nombre(self):
         return MAPA_PLAGAS.get(
@@ -136,3 +159,25 @@ class EventoAuditoria(models.Model):
 
     def __str__(self):
         return f"{self.accion} {self.entidad} {self.entidad_id}"
+
+
+class SesionMovil(models.Model):
+    """Sesión de la app móvil. Solo se guarda el hash del token, nunca el token."""
+
+    id = models.CharField(
+        max_length=100,
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="sesiones_movil"
+    )
+    token_hash = models.CharField(max_length=64, unique=True)
+    creada = models.DateTimeField(auto_now_add=True)
+    expira = models.DateTimeField()
+
+    def __str__(self):
+        return f"Sesión móvil de {self.usuario.username}"

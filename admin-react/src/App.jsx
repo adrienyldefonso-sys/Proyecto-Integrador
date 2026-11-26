@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Tablero from './components/Tablero'
 import VistaParcelas from './components/VistaParcelas'
+import Revisiones from './components/Revisiones'
 
 export default function App() {
   const [vista, setVista] = useState('alertas')
@@ -33,13 +34,18 @@ export default function App() {
         >
           Parcelas
         </button>
+        <button
+          type="button"
+          className={`pestana${vista === 'revisiones' ? ' activa' : ''}`}
+          onClick={() => setVista('revisiones')}
+        >
+          Revisiones
+        </button>
       </nav>
 
-      {vista === 'alertas' ? (
-        <Tablero onVerHistorial={verHistorial} />
-      ) : (
-        <VistaParcelas seleccion={seleccion} onSeleccionar={setSeleccion} />
-      )}
+      {vista === 'alertas' && <Tablero onVerHistorial={verHistorial} />}
+      {vista === 'parcelas' && <VistaParcelas seleccion={seleccion} onSeleccionar={setSeleccion} />}
+      {vista === 'revisiones' && <Revisiones />}
     </main>
   )
 }

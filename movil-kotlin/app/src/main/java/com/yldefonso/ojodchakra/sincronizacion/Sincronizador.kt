@@ -61,6 +61,17 @@ class Sincronizador(
             }
         }
 
+        // Al final se traen las revisiones que el agrónomo ya decidió desde la web
+        cliente.obtenerRevisiones()?.forEach { revision ->
+            dao.aplicarRevision(
+                id = revision.id,
+                estado = revision.estadoRevision,
+                etiqueta = revision.etiquetaValidada,
+                observacion = revision.observacionAgronomo,
+                fecha = revision.fechaRevisionMillis
+            )
+        }
+
         return resumen(sinConexion = false)
     }
 }

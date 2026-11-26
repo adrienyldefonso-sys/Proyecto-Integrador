@@ -1,4 +1,3 @@
-
 const NOMBRES_PLAGA = {
   Potato___Early_blight: 'Tizón temprano',
   Potato___Late_blight: 'Tizón tardío',
@@ -38,24 +37,26 @@ export function formatearFecha(iso) {
 export const formatearConfianza = (valor) =>
   `${Number(valor).toFixed(1)} %`
 
-// Construye la URL de una fotografía almacenada en Django.
-export function rutaDeFoto(foto) {
-  if (!foto) return ''
+// Normaliza la ruta relativa de una fotografía almacenada en Django.
+export function rutaDeFoto(url) {
+  if (!url || typeof url !== 'string') return null
 
-  const ruta = String(foto).trim()
+  const valor = url.trim()
+  if (!valor) return null
 
-  if (/^https?:\/\//i.test(ruta)) {
-    return ruta
+  try {
+    const ruta = new URL(valor, 'http://base.local').pathname
+
+    if (ruta.startsWith('/media/')) {
+      return ruta
+    }
+
+    if (ruta.startsWith('/diagnosticos/')) {
+      return `/media${ruta}`
+    }
+
+    return null
+  } catch {
+    return null
   }
-
-  const base = (
-    import.meta.env.VITE_MEDIA_URL ||
-    'http://127.0.0.1:8000/media/'
-  ).replace(/\/+$/, '')
-
-  const archivo = ruta
-    .replace(/^\/+/, '')
-    .replace(/^media\//, '')
-
-  return `${base}/${archivo}`
 }

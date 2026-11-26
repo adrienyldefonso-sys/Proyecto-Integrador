@@ -40,6 +40,20 @@ public class Diagnostico {
     @Column(name = "fecha_captura", nullable = false)
     private LocalDateTime fechaCaptura;
 
+    /** NINGUNA, SOLICITADA (el agricultor pidió revisión), CONFIRMADA o CORREGIDA (decide el agrónomo en Django). */
+    @Column(name = "estado_revision", nullable = false, length = 20)
+    private String estadoRevision = "NINGUNA";
+
+    // Django las define como NOT NULL con cadena vacía: nunca se envía null
+    @Column(name = "etiqueta_validada", nullable = false, length = 150)
+    private String etiquetaValidada = "";
+
+    @Column(name = "observacion_agronomo", nullable = false, columnDefinition = "TEXT")
+    private String observacionAgronomo = "";
+
+    @Column(name = "fecha_revision")
+    private LocalDateTime fechaRevision;
+
     protected Diagnostico() {
         // Lo exige JPA
     }
@@ -67,4 +81,15 @@ public class Diagnostico {
     public String getNivelSeveridad() { return nivelSeveridad; }
     public String getRecomendacion() { return recomendacion; }
     public LocalDateTime getFechaCaptura() { return fechaCaptura; }
+    public String getEstadoRevision() { return estadoRevision; }
+    public String getEtiquetaValidada() { return etiquetaValidada; }
+    public String getObservacionAgronomo() { return observacionAgronomo; }
+    public LocalDateTime getFechaRevision() { return fechaRevision; }
+
+    /** El agricultor pide revisión. Si el agrónomo ya decidió, no se pisa su respuesta. */
+    public void solicitarRevision() {
+        if (estadoRevision == null || "NINGUNA".equals(estadoRevision)) {
+            estadoRevision = "SOLICITADA";
+        }
+    }
 }

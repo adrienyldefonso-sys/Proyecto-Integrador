@@ -12,8 +12,12 @@ data class Parcela(
     val nombre: String,
     val cultivo: String,
     val referencia: String = "",
-    val latitud: Double,
-    val longitud: Double,
+    // Opcionales: una parcela puede guardarse sin ubicación y completarse después
+    val latitud: Double? = null,
+    val longitud: Double? = null,
     @ColumnInfo(name = "fecha_registro") val fechaRegistro: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "estado_sincronizacion") val estadoSincronizacion: String = "PENDIENTE"
-)
+) {
+    val tieneCoordenadas: Boolean
+        get() = latitud != null && longitud != null
+}

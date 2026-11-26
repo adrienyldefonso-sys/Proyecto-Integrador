@@ -1,6 +1,8 @@
 package com.ojodchakra.agricultor.error;
 
 import com.ojodchakra.agricultor.parcela.ParcelaNoEncontradaException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class ManejadorErrores extends ResponseEntityExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(ManejadorErrores.class);
+
     @ExceptionHandler(ParcelaNoEncontradaException.class)
     public ProblemDetail parcelaNoEncontrada(ParcelaNoEncontradaException e) {
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
@@ -37,9 +41,25 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail conflicto(DataIntegrityViolationException e) {
+        // La app solo recibe un mensaje general; la causa exacta queda en la consola de Spring Boot
+        log.warn("Conflicto al guardar desde la app: {}", e.getMostSpecificCause().getMessage());
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(
                 HttpStatus.CONFLICT, "No se pudo guardar por un conflicto con datos existentes.");
         problema.setTitle("Conflicto");
+        return problema;
+    }
+
+    @ExceptionHandler(NoAutorizadoException.class)
+    public ProblemDetail noAutorizado(NoAutorizadoException e) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+        problema.setTitle("No autorizado");
+        return problema;
+    }
+
+    @ExceptionHandler(ConflictoRegistroException.class)
+    public ProblemDetail registroDuplicado(ConflictoRegistroException e) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problema.setTitle("Registro duplicado");
         return problema;
     }
 
