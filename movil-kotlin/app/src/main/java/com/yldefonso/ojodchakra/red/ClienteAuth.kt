@@ -77,7 +77,7 @@ class ClienteAuth(
         val conexion = try {
             URL(urlBase + ruta).openConnection() as HttpURLConnection
         } catch (e: IOException) {
-            return@withContext ResultadoAuth.SinConexion(MENSAJE_SIN_RED)
+            return@withContext ResultadoAuth.SinConexion(mensajeSinRed(e))
         }
 
         try {
@@ -102,11 +102,10 @@ class ClienteAuth(
                         token = json.getString("token")
                     )
                 }
-                codigo in 500..599 -> ResultadoAuth.SinConexion("El servidor tuvo un problema. Intenta más tarde.")
                 else -> ResultadoAuth.Rechazado(mensajeDeError(leer(conexion.errorStream), codigo))
             }
         } catch (e: IOException) {
-            ResultadoAuth.SinConexion(MENSAJE_SIN_RED)
+            ResultadoAuth.SinConexion(mensajeSinRed(e))
         } catch (e: JSONException) {
             ResultadoAuth.Rechazado("La respuesta del servidor no es válida.")
         } finally {
@@ -121,6 +120,7 @@ class ClienteAuth(
         val porDefecto = when (codigo) {
             401 -> "Usuario o contraseña incorrectos."
             409 -> "Ese nombre de usuario ya está registrado."
+            in 500..599 -> "El servidor tuvo un error (código $codigo). Revisa la consola de Spring Boot."
             else -> "No se pudo completar la solicitud (código $codigo)."
         }
         if (cuerpo.isBlank()) return porDefecto
@@ -138,7 +138,6 @@ class ClienteAuth(
         }
     }
 
-    private companion object {
-        const val MENSAJE_SIN_RED = "No se pudo conectar con el servidor."
-    }
+    private fun mensajeSinRed(e: IOException): String =
+        "No llega a $urlBase (${e.javaClass.simpleName}: ${e.message ?: "sin detalle"})."
 }

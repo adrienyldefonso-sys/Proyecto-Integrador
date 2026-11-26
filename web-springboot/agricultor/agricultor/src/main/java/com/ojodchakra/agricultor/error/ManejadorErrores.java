@@ -63,6 +63,17 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
         return problema;
     }
 
+    /** Cualquier error no previsto: se guarda la causa completa en la consola y la app recibe un mensaje claro. */
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail errorInterno(Exception e) {
+        log.error("Error no controlado al atender una solicitud de la app", e);
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "El servidor tuvo un problema. Revisa la consola de Spring Boot para ver el detalle.");
+        problema.setTitle("Error interno");
+        return problema;
+    }
+
     @ExceptionHandler(UncheckedIOException.class)
     public ProblemDetail errorDeArchivo(UncheckedIOException e) {
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(
