@@ -2,31 +2,36 @@ package com.yldefonso.ojodchakra.red
 
 import com.yldefonso.ojodchakra.data.model.Diagnostico
 import com.yldefonso.ojodchakra.data.model.Parcela
+import com.yldefonso.ojodchakra.sesion.SesionUsuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.util.UUID
 
 class ClienteApiHttp(
     private val urlBase: String = ConfigApi.URL_BASE,
     private val claveApi: String = ConfigApi.CLAVE_API,
-    private val usuarioServidorId: String = ConfigApi.USUARIO_SERVIDOR_ID
+    private val usuarioId: () -> String? = { SesionUsuario.usuarioId },
+    private val token: () -> String? = { SesionUsuario.token }
 ) : ClienteApi {
 
     override suspend fun enviarParcela(parcela: Parcela): ResultadoEnvio = withContext(Dispatchers.IO) {
+        val usuario = usuarioId() ?: return@withContext ResultadoEnvio.Rechazado(MENSAJE_SIN_SESION)
         val json = JSONObject()
             .put("id", parcela.id)
-            .put("usuarioId", usuarioServidorId)
+            .put("usuarioId", usuario)
             .put("nombre", parcela.nombre)
             .put("cultivo", parcela.cultivo)
             .put("referencia", parcela.referencia)
-            .put("latitud", parcela.latitud)
-            .put("longitud", parcela.longitud)
+            .put("latitud", parcela.latitud ?: JSONObject.NULL)
+            .put("longitud", parcela.longitud ?: JSONObject.NULL)
             .put("fechaRegistro", FechaIso.desdeMillis(parcela.fechaRegistro))
             .toString()
 
@@ -38,6 +43,7 @@ class ClienteApiHttp(
 
     override suspend fun enviarDiagnostico(diagnostico: Diagnostico): ResultadoEnvio =
         withContext(Dispatchers.IO) {
+            val usuario = usuarioId() ?: return@withContext ResultadoEnvio.Rechazado(MENSAJE_SIN_SESION)
             val archivo = File(diagnostico.rutaFoto)
             if (!archivo.exists()) {
                 return@withContext ResultadoEnvio.Rechazado(
@@ -47,13 +53,18 @@ class ClienteApiHttp(
 
             val datos = JSONObject()
                 .put("id", diagnostico.id)
-                .put("usuarioId", usuarioServidorId)
+                .put("usuarioId", usuario)
                 .put("plagaDetectada", diagnostico.plagaDetectada)
                 .put("confianza", diagnostico.confianza.toDouble())
                 .put("nivelSeveridad", diagnostico.nivelSeveridad ?: "")
                 .put("recomendacion", diagnostico.recomendacion ?: "")
                 .put("fechaCaptura", FechaIso.desdeMillis(diagnostico.fechaCaptura))
             diagnostico.parcelaId?.let { datos.put("parcelaId", it) }
+            // Solo se pide revisión; la plaga final la decide el agrónomo en la web
+            datos.put(
+                "estadoRevision",
+                if (diagnostico.estadoRevision == "SOLICITADA") "SOLICITADA" else "NINGUNA"
+            )
 
             val foto = archivo.readBytes()
             val limite = "ojodchakra-" + UUID.randomUUID()
@@ -63,6 +74,50 @@ class ClienteApiHttp(
                 conexion.outputStream.use { escribirMultipart(it, limite, datos.toString(), foto) }
             }
         }
+
+    override suspend fun obtenerRevisiones(): List<RevisionRemota>? = withContext(Dispatchers.IO) {
+        val usuario = usuarioId() ?: return@withContext null
+        val url = urlBase + "/api/diagnosticos/revisiones?usuarioId=" +
+            URLEncoder.encode(usuario, "UTF-8")
+        val conexion = try {
+            URL(url).openConnection() as HttpURLConnection
+        } catch (e: IOException) {
+            return@withContext null
+        }
+        try {
+            conexion.requestMethod = "GET"
+            conexion.connectTimeout = 5_000
+            conexion.readTimeout = 20_000
+            conexion.setRequestProperty("X-Api-Key", claveApi)
+            conexion.setRequestProperty("Accept", "application/json")
+            autorizar(conexion)
+            if (conexion.responseCode !in 200..299) return@withContext null
+
+            val cuerpo = conexion.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            val lista = JSONArray(cuerpo)
+            (0 until lista.length()).map { indice ->
+                val fila = lista.getJSONObject(indice)
+                RevisionRemota(
+                    id = fila.getString("id"),
+                    estadoRevision = fila.getString("estadoRevision"),
+                    etiquetaValidada = fila.optString("etiquetaValidada", "").ifBlank { null },
+                    observacionAgronomo = fila.optString("observacionAgronomo", "").ifBlank { null },
+                    fechaRevisionMillis = fila.optString("fechaRevision", "")
+                        .takeIf { it.isNotBlank() }
+                        ?.let { FechaIso.haciaMillis(it) }
+                )
+            }
+        } catch (e: Exception) {
+            null
+        } finally {
+            conexion.disconnect()
+        }
+    }
+
+    /** Con sesión iniciada, el servidor sabe quién pide la información. */
+    private fun autorizar(conexion: HttpURLConnection) {
+        token()?.let { conexion.setRequestProperty("Authorization", "Bearer $it") }
+    }
 
     private fun enviar(ruta: String, escribirCuerpo: (HttpURLConnection) -> Unit): ResultadoEnvio {
         val conexion = try {
@@ -78,6 +133,7 @@ class ClienteApiHttp(
             conexion.doOutput = true
             conexion.setChunkedStreamingMode(0)
             conexion.setRequestProperty("X-Api-Key", claveApi)
+            autorizar(conexion)
             conexion.setRequestProperty("Accept", "application/json")
             escribirCuerpo(conexion)
 
@@ -132,3 +188,5 @@ class ClienteApiHttp(
         }
     }
 }
+
+private const val MENSAJE_SIN_SESION = "Inicia sesión para enviar tus datos."

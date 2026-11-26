@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -52,6 +53,13 @@ public class DiagnosticoServicio {
                 throw new SolicitudInvalidaException(
                         "Ya existe un diagnóstico con ese id que pertenece a otro usuario.");
             }
+            if (solicitud.pideRevision()) {
+                diagnostico.solicitarRevision();
+                diagnosticos.saveAndFlush(diagnostico);
+                auditoria.saveAndFlush(new EventoAuditoria(
+                        "REVISION_SOLICITADA", "diagnostico", diagnostico.getId(),
+                        diagnostico.getUsuarioId(), ip, "El agricultor pidió revisión de un agrónomo"));
+            }
             return new Resultado(diagnostico, false);
         }
 
@@ -75,6 +83,9 @@ public class DiagnosticoServicio {
                 texto(solicitud.nivelSeveridad()),
                 texto(solicitud.recomendacion()),
                 LocalDateTime.ofInstant(solicitud.fechaCaptura(), ZoneOffset.UTC));
+        if (solicitud.pideRevision()) {
+            nuevo.solicitarRevision();
+        }
 
         // Primero la base y después el archivo: si la foto falla, la transacción se revierte.
         diagnosticos.saveAndFlush(nuevo);
@@ -85,6 +96,12 @@ public class DiagnosticoServicio {
                         + String.format(Locale.US, "%.1f", nuevo.getConfianza()) + " %)"));
 
         return new Resultado(nuevo, true);
+    }
+
+    /** Diagnósticos del usuario que el agrónomo ya confirmó o corrigió (para que la app los actualice). */
+    @Transactional(readOnly = true)
+    public List<Diagnostico> revisadasDe(String usuarioId) {
+        return diagnosticos.findByUsuarioIdAndEstadoRevisionIn(usuarioId, List.of("CONFIRMADA", "CORREGIDA"));
     }
 
     private void validarParcela(DiagnosticoSolicitud solicitud) {

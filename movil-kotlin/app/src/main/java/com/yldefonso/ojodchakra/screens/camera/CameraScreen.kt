@@ -1,55 +1,81 @@
 package com.yldefonso.ojodchakra.screens.camera
 
+import com.yldefonso.ojodchakra.ui.iconos.IconosOjoD
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CenterFocusWeak
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.yldefonso.ojodchakra.ml.CalidadFoto
+import com.yldefonso.ojodchakra.ml.DecisionHoja
 import com.yldefonso.ojodchakra.ml.PlagaClassifier
+import com.yldefonso.ojodchakra.ui.componentes.BotonPrincipal
+import com.yldefonso.ojodchakra.ui.componentes.EncabezadoPantalla
+import com.yldefonso.ojodchakra.ui.componentes.IconoContenedor
+import com.yldefonso.ojodchakra.ui.componentes.Tarjeta
+import com.yldefonso.ojodchakra.ui.theme.LocalColoresApp
 import java.util.concurrent.Executors
 
-// Paleta de Colores Institucional OjoDChakra
-private val VerdePrincipal = Color(0xFF2E6A38)
-private val VerdeMenta = Color(0xFF10B981)
-private val FondoPantalla = Color(0xFFFAFCFA)
-private val SuperficieTarjeta = Color(0xFFFFFFFF)
-private val VerdeSubtil = Color(0xFFEBF3EC)
-private val TextoOscuro = Color(0xFF1B2E21)
-private val TextoMuted = Color(0xFF5A7060)
-
+/** Cámara de escaneo: vista previa a pantalla completa con guía de encuadre y disparador. */
 @Composable
 fun CameraScreen(
     viewModel: CameraViewModel,
-    onDiagnosisReady: () -> Unit
+    onDiagnosisReady: () -> Unit,
+    onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -79,275 +105,282 @@ fun CameraScreen(
         }
     }
 
+    if (!hasPermission) {
+        PermisoCamara(
+            onBack = onBack,
+            onConceder = { permissionLauncher.launch(Manifest.permission.CAMERA) }
+        )
+        return
+    }
+
+    val colores = LocalColoresApp.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        if (hasPermission) {
-            // 1. VISTA PREVIA DE LA CÁMARA (CAMERAX)
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    val previewView = PreviewView(ctx).apply {
-                        scaleType = PreviewView.ScaleType.FILL_CENTER
+        // 1. Vista previa de la cámara (CameraX)
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                val previewView = PreviewView(ctx).apply {
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                }
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
                     }
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                    val capture = ImageCapture.Builder()
+                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                        .build()
+                    imageCapture = capture
 
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-                        val preview = Preview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
-                        val capture = ImageCapture.Builder()
-                            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                            .build()
-                        imageCapture = capture
-
-                        try {
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                CameraSelector.DEFAULT_BACK_CAMERA,
-                                preview,
-                                capture
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }, ContextCompat.getMainExecutor(ctx))
-
-                    previewView
-                }
-            )
-
-            // 2. OVERLAY / RECUADRO DE ENFOQUE (ESCÁNER)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Marco de enfoque central con esquinas redondeadas y borde menta
-                Box(
-                    modifier = Modifier
-                        .size(280.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .border(
-                            width = 2.5.dp,
-                            color = VerdeMenta,
-                            shape = RoundedCornerShape(24.dp)
+                    try {
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            capture
                         )
-                        .background(Color.Black.copy(alpha = 0.08f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CenterFocusWeak,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.4f),
-                        modifier = Modifier.size(64.dp)
-                    )
-                }
-            }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }, ContextCompat.getMainExecutor(ctx))
 
-            // 3. BARRA SUPERIOR INFORMATIVA
-            Surface(
+                previewView
+            }
+        )
+
+        // 2. Guía de encuadre: cuatro esquinas, sin marco de color que tape la hoja
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            GuiaEncuadre(color = colores.bandaAcento)
+        }
+
+        // 3. Barra superior: volver y parcela elegida
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(top = 16.dp),
-                shape = RoundedCornerShape(50),
-                color = Color.Black.copy(alpha = 0.65f),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.45f))
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Volver",
+                    tint = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = Color.Black.copy(alpha = 0.5f)
+            ) {
+                Text(
+                    text = viewModel.parcelaNombre.value?.let { "Parcela: $it" } ?: "Sin parcela",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                )
+            }
+        }
+
+        // 4. Panel inferior: avisos y disparador
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .background(Color.Black.copy(alpha = 0.55f))
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            viewModel.mensajeRechazo.value?.let { mensaje ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = colores.alertaFondo
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = VerdeMenta,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Coloca la hoja en el centro",
-                        color = Color.White,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
+                        text = mensaje,
+                        color = colores.alertaTexto,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(14.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            // 4. DISPARADOR FLOTANTE TIPO CÁMARA PROFESIONAL
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(bottom = 32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Botón circular obturador
-                    Surface(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .shadow(elevation = 12.dp, shape = CircleShape, spotColor = VerdePrincipal)
-                            .clip(CircleShape)
-                            .clickable(enabled = !isCapturing) {
-                                val capture = imageCapture ?: return@clickable
-                                isCapturing = true
+                    .size(82.dp)
+                    .border(3.dp, Color.White, CircleShape)
+                    .padding(6.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable(enabled = !isCapturing) {
+                        val capture = imageCapture ?: return@clickable
+                        isCapturing = true
 
-                                capture.takePicture(
-                                    cameraExecutor,
-                                    object : ImageCapture.OnImageCapturedCallback() {
-                                        override fun onCaptureSuccess(image: ImageProxy) {
-                                            val bitmap = image.toBitmap()
-                                            image.close()
+                        capture.takePicture(
+                            cameraExecutor,
+                            object : ImageCapture.OnImageCapturedCallback() {
+                                override fun onCaptureSuccess(image: ImageProxy) {
+                                    val bitmap = image.toBitmap()
+                                    image.close()
 
-                                            val classifier = PlagaClassifier(context)
-                                            val result = classifier.classify(bitmap)
-
-                                            mainExecutor.execute {
-                                                viewModel.onPhotoCaptured(bitmap)
-                                                viewModel.onResultReady(result)
-                                                onDiagnosisReady()
-                                                isCapturing = false
-                                            }
+                                    // Control de calidad: una foto borrosa u oscura no se analiza
+                                    CalidadFoto.evaluar(bitmap)?.let { problema ->
+                                        mainExecutor.execute {
+                                            viewModel.onRechazada(problema.mensaje)
+                                            isCapturing = false
                                         }
-
-                                        override fun onError(exception: ImageCaptureException) {
-                                            exception.printStackTrace()
-                                            mainExecutor.execute {
-                                                isCapturing = false
-                                            }
-                                        }
+                                        return
                                     }
-                                )
-                            },
-                        shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.25f),
-                        border = BorderStroke(3.dp, Color.White)
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.padding(6.dp)
-                        ) {
-                            Surface(
-                                modifier = Modifier.fillMaxSize(),
-                                shape = CircleShape,
-                                color = VerdePrincipal
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    if (isCapturing) {
-                                        CircularProgressIndicator(
-                                            color = Color.White,
-                                            modifier = Modifier.size(28.dp),
-                                            strokeWidth = 3.dp
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Default.CameraAlt,
-                                            contentDescription = "Escanear cultivo",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(32.dp)
-                                        )
+
+                                    val classifier = PlagaClassifier(context)
+                                    val resultado = classifier.classify(bitmap)
+
+                                    mainExecutor.execute {
+                                        when (val veredicto = DecisionHoja.evaluar(resultado)) {
+                                            is DecisionHoja.Veredicto.Aceptada -> {
+                                                viewModel.limpiarRechazo()
+                                                viewModel.onPhotoCaptured(bitmap)
+                                                viewModel.onResultReady(veredicto.resultado)
+                                                onDiagnosisReady()
+                                            }
+                                            is DecisionHoja.Veredicto.Rechazada ->
+                                                viewModel.onRechazada(DecisionHoja.mensaje(veredicto.motivo))
+                                        }
+                                        isCapturing = false
+                                    }
+                                }
+
+                                override fun onError(exception: ImageCaptureException) {
+                                    exception.printStackTrace()
+                                    mainExecutor.execute {
+                                        isCapturing = false
                                     }
                                 }
                             }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = if (isCapturing) "Procesando muestra..." else "Toca para escanear",
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (isCapturing) {
+                    CircularProgressIndicator(
                         color = Color.White,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
+                        modifier = Modifier.size(30.dp),
+                        strokeWidth = 3.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = IconosOjoD.Escanear,
+                        contentDescription = "Escanear cultivo",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
 
-        } else {
-            // 5. PANTALLA DE SOLICITUD DE PERMISO ESTILIZADA
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(FondoPantalla)
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    color = SuperficieTarjeta,
-                    border = BorderStroke(1.dp, VerdePrincipal.copy(alpha = 0.2f)),
-                    shadowElevation = 4.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(28.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(68.dp),
-                            shape = CircleShape,
-                            color = VerdeSubtil
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Camera,
-                                    contentDescription = null,
-                                    tint = VerdePrincipal,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            }
-                        }
+            Spacer(modifier = Modifier.height(12.dp))
 
-                        Spacer(modifier = Modifier.height(18.dp))
+            Text(
+                text = if (isCapturing) "Procesando muestra..." else "Centra una hoja y toca el botón",
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
 
-                        Text(
-                            text = "Permiso de cámara requerido",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = TextoOscuro,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 18.sp
-                            )
-                        )
+/** Esquinas de guía para encuadrar la hoja. */
+@Composable
+private fun GuiaEncuadre(color: Color) {
+    Canvas(modifier = Modifier.size(270.dp)) {
+        val largo = size.width * 0.18f
+        val grosor = 4.dp.toPx()
+        val ancho = size.width
+        val alto = size.height
 
-                        Spacer(modifier = Modifier.height(8.dp))
+        fun linea(x1: Float, y1: Float, x2: Float, y2: Float) {
+            drawLine(
+                color = color,
+                start = Offset(x1, y1),
+                end = Offset(x2, y2),
+                strokeWidth = grosor,
+                cap = StrokeCap.Round
+            )
+        }
 
-                        Text(
-                            text = "OjoDChakra necesita acceso a la cámara para tomar fotos de las hojas y diagnosticar posibles plagas en tiempo real.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = TextoMuted,
-                                textAlign = TextAlign.Center,
-                                fontSize = 13.sp
-                            )
-                        )
+        linea(0f, 0f, largo, 0f)
+        linea(0f, 0f, 0f, largo)
+        linea(ancho, 0f, ancho - largo, 0f)
+        linea(ancho, 0f, ancho, largo)
+        linea(0f, alto, largo, alto)
+        linea(0f, alto, 0f, alto - largo)
+        linea(ancho, alto, ancho - largo, alto)
+        linea(ancho, alto, ancho, alto - largo)
+    }
+}
 
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Button(
-                            onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = VerdePrincipal,
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text(
-                                text = "Conceder permiso",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+/** Pantalla cuando la app todavía no tiene permiso de cámara. */
+@Composable
+private fun PermisoCamara(onBack: () -> Unit, onConceder: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        EncabezadoPantalla(
+            titulo = "Escanear",
+            subtitulo = "Permiso de cámara",
+            onVolver = onBack
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Tarjeta(padding = 24.dp) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconoContenedor(icono = IconosOjoD.Escanear, tamano = 72.dp)
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(
+                        text = "Necesitamos acceso a la cámara",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "OjoDChakra usa la cámara solo para fotografiar hojas y diagnosticar plagas. Las fotos se guardan en tu celular.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    BotonPrincipal(texto = "Conceder permiso", onClick = onConceder)
                 }
             }
         }

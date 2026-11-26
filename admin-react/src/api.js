@@ -44,6 +44,7 @@ export function obtenerHistorial(parcelaId, { desde = '', hasta = '' } = {}) {
 
 export const obtenerAlertas = () => pedir('/api/alertas/')
 
+<<<<<<< HEAD
 // Convierte la URL absoluta que entrega la API en una ruta que pasa por el proxy de Vite
 export function rutaDeFoto(url) {
   if (!url) return null
@@ -53,3 +54,42 @@ export function rutaDeFoto(url) {
     return null
   }
 }
+=======
+export const obtenerSesion = () => pedir('/api/sesion/')
+
+export const obtenerRevisiones = (estado = 'pendientes') =>
+  pedir(`/api/revisiones/?estado=${encodeURIComponent(estado)}`)
+
+function obtenerCookie(nombre) {
+  const coincidencia = document.cookie.split('; ').find((c) => c.startsWith(`${nombre}=`))
+  return coincidencia ? decodeURIComponent(coincidencia.split('=')[1]) : ''
+}
+
+function mensajeDeError(cuerpo) {
+  if (typeof cuerpo.detail === 'string') return cuerpo.detail
+  const primero = Object.values(cuerpo).flat()[0]
+  return typeof primero === 'string' ? primero : 'No se pudo guardar la revisión.'
+}
+
+// Envía la decisión del agrónomo. Django exige el token CSRF en los cambios.
+export async function decidirRevision(diagnosticoId, datos) {
+  let respuesta
+  try {
+    respuesta = await fetch(`/api/diagnosticos/${diagnosticoId}/revision/`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRFToken': obtenerCookie('csrftoken'),
+      },
+      body: JSON.stringify(datos),
+    })
+  } catch {
+    throw new ErrorApi(0, 'No se pudo conectar con el servidor. Revisa que Django esté corriendo.')
+  }
+  const cuerpo = await respuesta.json().catch(() => ({}))
+  if (!respuesta.ok) throw new ErrorApi(respuesta.status, mensajeDeError(cuerpo))
+  return cuerpo
+}
+>>>>>>> main

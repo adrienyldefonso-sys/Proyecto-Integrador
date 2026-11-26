@@ -3,6 +3,7 @@ package com.yldefonso.ojodchakra.data.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.yldefonso.ojodchakra.ml.Clases
 import java.util.UUID
 
 @Entity(tableName = "diagnosticos")
@@ -16,13 +17,15 @@ data class Diagnostico(
     @ColumnInfo(name = "nivel_severidad") val nivelSeveridad: String? = null,
     val recomendacion: String? = null,
     @ColumnInfo(name = "fecha_captura") val fechaCaptura: Long = System.currentTimeMillis(),
-    @ColumnInfo(name = "estado_sincronizacion") val estadoSincronizacion: String = "PENDIENTE"
+    @ColumnInfo(name = "estado_sincronizacion") val estadoSincronizacion: String = "PENDIENTE",
+    // NINGUNA: sin revisión. SOLICITADA: el agricultor pidió revisión.
+    // CONFIRMADA o CORREGIDA: lo decidió el agrónomo desde la web.
+    @ColumnInfo(name = "estado_revision") val estadoRevision: String = "NINGUNA",
+    // Plaga validada por el agrónomo. Solo tiene valor en CONFIRMADA o CORREGIDA.
+    @ColumnInfo(name = "etiqueta_validada") val etiquetaValidada: String? = null,
+    @ColumnInfo(name = "observacion_agronomo") val observacionAgronomo: String? = null,
+    @ColumnInfo(name = "fecha_revision") val fechaRevision: Long? = null
 ) {
     val plagaEnEspanol: String
-        get() = when (plagaDetectada) {
-            "Potato___Early_blight" -> "Tizón temprano"
-            "Potato___Late_blight" -> "Tizón tardío"
-            "Potato___healthy" -> "Planta sana"
-            else -> plagaDetectada
-        }
+        get() = Clases.nombre(plagaDetectada)
 }

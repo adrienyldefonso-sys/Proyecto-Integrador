@@ -4,6 +4,7 @@ import com.yldefonso.ojodchakra.util.ValidadorParcela
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -48,5 +49,25 @@ class ValidadorParcelaTest {
     fun textoNaNNoEsCoordenadaValida() {
         val e = ValidadorParcela.validar("Parcela", "Papa", "NaN", "-77.0")
         assertTrue(e.latitud != null)
+    }
+
+    @Test
+    fun coordenadasVaciasSonOpcionales() {
+        val e = ValidadorParcela.validar("Parcela", "Papa", "", "")
+        assertFalse(e.hayErrores)
+    }
+
+    @Test
+    fun soloLatitudGeneraErrorEnLongitud() {
+        val e = ValidadorParcela.validar("Parcela", "Papa", "-12.0", "")
+        assertNull(e.latitud)
+        assertNotNull(e.longitud)
+    }
+
+    @Test
+    fun soloLongitudGeneraErrorEnLatitud() {
+        val e = ValidadorParcela.validar("Parcela", "Papa", "", "-77.0")
+        assertNotNull(e.latitud)
+        assertNull(e.longitud)
     }
 }

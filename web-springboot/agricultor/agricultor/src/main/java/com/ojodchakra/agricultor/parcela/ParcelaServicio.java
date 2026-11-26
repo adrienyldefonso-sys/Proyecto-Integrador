@@ -32,6 +32,11 @@ public class ParcelaServicio {
 
     @Transactional
     public Resultado registrar(ParcelaSolicitud solicitud, String ip) {
+        if ((solicitud.latitud() == null) != (solicitud.longitud() == null)) {
+            throw new SolicitudInvalidaException(
+                    "Envía latitud y longitud juntas, o ninguna (parcela sin ubicación).");
+        }
+
         Optional<Parcela> existente = parcelas.findById(solicitud.id());
         if (existente.isPresent()) {
             Parcela parcela = existente.get();

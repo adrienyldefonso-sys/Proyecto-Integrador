@@ -28,14 +28,15 @@ class ParcelaAdmin(admin.ModelAdmin):
 class DiagnosticoAdmin(admin.ModelAdmin):
     list_display = (
         "plaga_detectada", "usuario", "parcela",
-        "confianza", "nivel_severidad", "fecha_captura"
+        "confianza", "nivel_severidad", "fecha_captura",
+        "estado_revision"
     )
     search_fields = (
         "plaga_detectada",
         "usuario__username",
         "parcela__nombre"
     )
-    list_filter = ("nivel_severidad", "fecha_captura")
+    list_filter = ("nivel_severidad", "estado_revision", "fecha_captura")
 
 
 @admin.register(EventoAuditoria)

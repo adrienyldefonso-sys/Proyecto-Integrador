@@ -13,4 +13,14 @@ object FechaIso {
         formato.timeZone = TimeZone.getTimeZone("UTC")
         return formato.format(Date(milisegundos))
     }
+
+    /** Convierte la fecha ISO del servidor (con o sin fracciones de segundo) a milisegundos. */
+    fun haciaMillis(texto: String): Long? = try {
+        val formato = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+        formato.timeZone = TimeZone.getTimeZone("UTC")
+        val sinFraccion = texto.substringBefore('.').substringBefore('Z')
+        formato.parse(sinFraccion)?.time
+    } catch (e: Exception) {
+        null
+    }
 }

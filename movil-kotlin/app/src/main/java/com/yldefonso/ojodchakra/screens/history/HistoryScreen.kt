@@ -1,12 +1,22 @@
 package com.yldefonso.ojodchakra.screens.history
 
+import com.yldefonso.ojodchakra.ui.iconos.IconosOjoD
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -18,43 +28,40 @@ import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yldefonso.ojodchakra.data.model.Diagnostico
+import com.yldefonso.ojodchakra.ui.componentes.EncabezadoPantalla
+import com.yldefonso.ojodchakra.ui.componentes.EstadoVacio
+import com.yldefonso.ojodchakra.ui.componentes.Insignia
+import com.yldefonso.ojodchakra.ui.componentes.Tarjeta
+import com.yldefonso.ojodchakra.ui.componentes.TipoEstado
+import com.yldefonso.ojodchakra.ui.theme.LocalColoresApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-
-// Paleta de Colores Institucional OjoDChakra
-private val VerdePrincipal = Color(0xFF2E6A38)
-private val FondoPantalla = Color(0xFFFAFCFA)
-private val SuperficieTarjeta = Color(0xFFFFFFFF)
-private val VerdeSubtil = Color(0xFFEBF3EC)
-private val TextoOscuro = Color(0xFF1B2E21)
-private val TextoMuted = Color(0xFF5A7060)
-
-// Colores para estado de sincronización y borrado
-private val FondoPendiente = Color(0xFFFFF3E0)
-private val TextoPendiente = Color(0xFFD84315)
-private val FondoSincronizado = Color(0xFFE8F5E9)
-private val TextoSincronizado = Color(0xFF2E6A38)
-private val RojoEliminar = Color(0xFFC62828)
-private val FondoRojoSuave = Color(0xFFFFEBEE)
 
 @Composable
 fun HistoryScreen(
@@ -64,219 +71,97 @@ fun HistoryScreen(
 ) {
     val diagnosticos by viewModel.diagnosticos.collectAsState()
     var mostrarDialogo by remember { mutableStateOf(false) }
+    val colores = LocalColoresApp.current
 
-    Box(
+    val subtitulo = if (diagnosticos.isEmpty()) "Sin reportes guardados"
+    else "${diagnosticos.size} diagnóstico(s) registrado(s)"
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoPantalla)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // ==========================================
-            // 1. ENCABEZADO CON BOTÓN "LIMPIAR" REDISEÑADO
-            // ==========================================
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Historial de reportes",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            color = TextoOscuro,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 24.sp
-                        )
-                    )
-                    Text(
-                        text = if (diagnosticos.isEmpty()) "Sin reportes guardados" else "${diagnosticos.size} diagnóstico(s) registrado(s)",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = TextoMuted,
-                            fontSize = 13.sp
-                        )
-                    )
-                }
-
+        EncabezadoPantalla(
+            titulo = "Historial",
+            subtitulo = subtitulo,
+            onVolver = onBack,
+            acciones = {
                 if (diagnosticos.isNotEmpty()) {
-                    Surface(
+                    IconButton(
+                        onClick = { mostrarDialogo = true },
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { mostrarDialogo = true },
-                        shape = RoundedCornerShape(12.dp),
-                        color = FondoRojoSuave,
-                        border = BorderStroke(1.dp, RojoEliminar.copy(alpha = 0.25f))
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(colores.bandaTexto.copy(alpha = 0.14f))
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteSweep,
-                                contentDescription = "Limpiar historial",
-                                tint = RojoEliminar,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Limpiar",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = RojoEliminar,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ==========================================
-            // 2. LISTA DE CARDS (CON EVENTO ONCLICK AL DETALLE)
-            // ==========================================
-            if (diagnosticos.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(0.9f),
-                        shape = RoundedCornerShape(24.dp),
-                        color = SuperficieTarjeta,
-                        border = BorderStroke(1.dp, VerdePrincipal.copy(alpha = 0.15f)),
-                        shadowElevation = 2.dp
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(64.dp),
-                                shape = CircleShape,
-                                color = VerdeSubtil
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.History,
-                                        contentDescription = null,
-                                        tint = VerdePrincipal,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = "Aún no hay reportes",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    color = TextoOscuro,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = "Escanea un cultivo para generar tu primer análisis local.",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = TextoMuted,
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 13.sp
-                                )
-                            )
-                        }
-                    }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(diagnosticos, key = { it.id }) { diagnostico ->
-                        ReporteItem(
-                            diagnostico = diagnostico,
-                            onClick = { onReporteClick(diagnostico.id) }
+                        Icon(
+                            imageVector = IconosOjoD.Papelera,
+                            contentDescription = "Limpiar historial",
+                            tint = colores.bandaTexto
                         )
                     }
                 }
             }
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ==========================================
-            // 3. BOTÓN VOLVER AL INICIO
-            // ==========================================
-            Button(
-                onClick = onBack,
+        if (diagnosticos.isEmpty()) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp), spotColor = VerdePrincipal),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = VerdePrincipal,
-                    contentColor = Color.White
-                )
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Volver al inicio",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                EstadoVacio(
+                    icono = IconosOjoD.Historial,
+                    titulo = "Aún no hay reportes",
+                    descripcion = "Escanea un cultivo para generar tu primer diagnóstico. Quedará guardado aquí."
                 )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 20.dp,
+                    vertical = 18.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(diagnosticos, key = { it.id }) { diagnostico ->
+                    ReporteItem(
+                        diagnostico = diagnostico,
+                        onClick = { onReporteClick(diagnostico.id) }
+                    )
+                }
             }
         }
     }
 
-    // ==========================================
-    // DIÁLOGO DE BORRADO
-    // ==========================================
     if (mostrarDialogo) {
         AlertDialog(
             onDismissRequest = { mostrarDialogo = false },
-            shape = RoundedCornerShape(20.dp),
-            containerColor = SuperficieTarjeta,
-            title = {
-                Text(
-                    text = "¿Eliminar todo el historial?",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        color = TextoOscuro,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            },
+            shape = RoundedCornerShape(24.dp),
+            title = { Text("¿Eliminar todo el historial?") },
             text = {
                 Text(
-                    text = "Esta acción borrará permanentemente todos los reportes e imágenes locales.",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextoMuted)
+                    text = "Se borrarán permanentemente todos los reportes y sus fotos de este celular.",
+                    style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
                         viewModel.borrarHistorial()
                         mostrarDialogo = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = RojoEliminar),
-                    shape = RoundedCornerShape(12.dp)
+                    }
                 ) {
-                    Text("Eliminar todo", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Eliminar todo", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { mostrarDialogo = false }) {
-                    Text("Cancelar", color = TextoMuted, fontWeight = FontWeight.SemiBold)
+                    Text("Cancelar")
                 }
             }
         )
@@ -285,112 +170,70 @@ fun HistoryScreen(
 
 @Composable
 private fun ReporteItem(diagnostico: Diagnostico, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 2.dp,
-                shape = RoundedCornerShape(18.dp),
-                spotColor = Color.Black.copy(alpha = 0.06f)
-            )
-            .clip(RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        color = SuperficieTarjeta,
-        border = BorderStroke(1.dp, VerdePrincipal.copy(alpha = 0.12f))
+    val pendiente = diagnostico.estadoSincronizacion == "PENDIENTE"
+
+    Tarjeta(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        padding = 12.dp
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // FOTO DE MUESTRA
+        Row(verticalAlignment = Alignment.CenterVertically) {
             FotoReporte(
                 ruta = diagnostico.rutaFoto,
                 ladoMaximo = 200,
                 modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .size(76.dp)
+                    .clip(RoundedCornerShape(16.dp))
             )
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            // INFORMACIÓN
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = diagnostico.plagaEnEspanol,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = TextoOscuro,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp
-                    )
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.AccessTime,
+                        imageVector = IconosOjoD.Reloj,
                         contentDescription = null,
-                        tint = TextoMuted,
-                        modifier = Modifier.size(13.dp)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = formatearFecha(diagnostico.fechaCaptura),
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = TextoMuted,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                val esPendiente = diagnostico.estadoSincronizacion == "PENDIENTE"
-                Surface(
-                    color = if (esPendiente) FondoPendiente else FondoSincronizado,
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (esPendiente) Icons.Default.Sync else Icons.Default.CloudDone,
-                            contentDescription = null,
-                            tint = if (esPendiente) TextoPendiente else TextoSincronizado,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = textoEstado(diagnostico.estadoSincronizacion),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = if (esPendiente) TextoPendiente else TextoSincronizado,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
-                            )
-                        )
-                    }
-                }
+                Insignia(
+                    texto = textoEstado(diagnostico.estadoSincronizacion),
+                    tipo = if (pendiente) TipoEstado.ALERTA else TipoEstado.EXITO,
+                    icono = if (pendiente) IconosOjoD.Sincronizar else IconosOjoD.NubeOk
+                )
             }
 
-            // FLECHA INDICADORA DE NAVEGACIÓN
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = "Ver detalle",
-                tint = VerdePrincipal.copy(alpha = 0.5f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(14.dp)
             )
         }
     }
 }
 
-// ---- UTILIDADES ----
+// ---- UTILIDADES COMPARTIDAS CON EL DETALLE ----
 
 @Composable
 internal fun FotoReporte(ruta: String, ladoMaximo: Int, modifier: Modifier) {
@@ -406,7 +249,7 @@ internal fun FotoReporte(ruta: String, ladoMaximo: Int, modifier: Modifier) {
             contentScale = ContentScale.Crop
         )
     } else {
-        Box(modifier = modifier.background(VerdeSubtil))
+        Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant))
     }
 }
 
@@ -433,7 +276,7 @@ internal fun formatearFecha(milisegundos: Long): String {
 }
 
 internal fun textoEstado(estado: String): String = when (estado) {
-    "PENDIENTE" -> "Pendiente de sincronizar"
-    "SINCRONIZADO" -> "Sincronizado"
+    "PENDIENTE" -> "Pendiente de enviar"
+    "SINCRONIZADO" -> "Enviado al servidor"
     else -> estado
 }
