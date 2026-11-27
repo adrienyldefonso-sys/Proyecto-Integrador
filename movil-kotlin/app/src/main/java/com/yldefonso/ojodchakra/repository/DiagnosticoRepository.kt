@@ -7,7 +7,9 @@ import com.yldefonso.ojodchakra.local.AppDatabase
 import com.yldefonso.ojodchakra.ml.ClassificationResult
 import com.yldefonso.ojodchakra.ml.MotorRecomendaciones
 import kotlinx.coroutines.Dispatchers
+import com.yldefonso.ojodchakra.sesion.SesionUsuario
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -18,7 +20,9 @@ class DiagnosticoRepository(context: Context) {
     private val appContext = context.applicationContext
     private val dao = AppDatabase.getInstance(appContext).diagnosticoDao()
 
-    val diagnosticos: Flow<List<Diagnostico>> = dao.observarTodos()
+    // Solo los reportes de la cuenta activa (o del invitado)
+    val diagnosticos: Flow<List<Diagnostico>> =
+        SesionUsuario.propietario.flatMapLatest { dao.observarDe(it) }
 
     fun observarPorId(id: String): Flow<Diagnostico?> = dao.observarPorId(id)
 
@@ -40,7 +44,7 @@ class DiagnosticoRepository(context: Context) {
         dao.insertar(
             Diagnostico(
                 id = id,
-                usuarioId = USUARIO_LOCAL,
+                usuarioId = SesionUsuario.propietarioActual,
                 parcelaId = parcelaId,
                 rutaFoto = archivo.absolutePath,
                 plagaDetectada = resultado.label,
@@ -65,7 +69,4 @@ class DiagnosticoRepository(context: Context) {
         dao.limpiarHistorial()
     }
 
-    companion object {
-        const val USUARIO_LOCAL = "usuario_local"
-    }
 }

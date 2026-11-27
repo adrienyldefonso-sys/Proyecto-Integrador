@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,13 +30,15 @@ data class EstadoSincronizacion(
 class SincronizacionViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dao = AppDatabase.getInstance(application).sincronizacionDao()
-    private val sincronizador = Sincronizador(dao, ClienteApiHttp())
+    private val sincronizador = Sincronizador(dao, ClienteApiHttp()) { SesionUsuario.propietarioActual }
     private val bloqueo = Mutex()
 
-    val pendientes: StateFlow<Int> = combine(
-        dao.contarParcelasPendientes(),
-        dao.contarDiagnosticosPendientes()
-    ) { parcelas, diagnosticos -> parcelas + diagnosticos }
+    val pendientes: StateFlow<Int> = SesionUsuario.propietario.flatMapLatest { dueno ->
+        combine(
+            dao.contarParcelasPendientes(dueno),
+            dao.contarDiagnosticosPendientes(dueno)
+        ) { parcelas, diagnosticos -> parcelas + diagnosticos }
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     private val _estado = MutableStateFlow(EstadoSincronizacion())

@@ -5,15 +5,20 @@ import com.yldefonso.ojodchakra.data.model.Parcela
 import com.yldefonso.ojodchakra.data.model.ParcelaConConteo
 import com.yldefonso.ojodchakra.data.model.ParcelaEnMapa
 import com.yldefonso.ojodchakra.local.AppDatabase
+import com.yldefonso.ojodchakra.sesion.SesionUsuario
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 
 class ParcelaRepository(context: Context) {
 
     private val dao = AppDatabase.getInstance(context.applicationContext).parcelaDao()
 
-    val parcelas: Flow<List<ParcelaConConteo>> = dao.observarConConteo(USUARIO_LOCAL)
+    // Cada vez que cambia la cuenta, se vuelve a consultar solo lo de esa cuenta
+    val parcelas: Flow<List<ParcelaConConteo>> =
+        SesionUsuario.propietario.flatMapLatest { dao.observarConConteo(it) }
 
-    val parcelasEnMapa: Flow<List<ParcelaEnMapa>> = dao.observarParaMapa(USUARIO_LOCAL)
+    val parcelasEnMapa: Flow<List<ParcelaEnMapa>> =
+        SesionUsuario.propietario.flatMapLatest { dao.observarParaMapa(it) }
 
     suspend fun obtenerPorId(id: String): Parcela? = dao.obtenerPorId(id)
 
@@ -26,7 +31,7 @@ class ParcelaRepository(context: Context) {
         longitud: Double?
     ): String {
         val parcela = Parcela(
-            usuarioId = USUARIO_LOCAL,
+            usuarioId = SesionUsuario.propietarioActual,
             nombre = nombre.trim(),
             cultivo = cultivo.trim(),
             referencia = referencia.trim(),
@@ -37,8 +42,4 @@ class ParcelaRepository(context: Context) {
         return parcela.id
     }
 
-    companion object {
-        // Provisional: mismo valor que DiagnosticoRepository, se reemplaza con el inicio de sesión
-        const val USUARIO_LOCAL = "usuario_local"
-    }
 }

@@ -1,5 +1,16 @@
 package com.yldefonso.ojodchakra.screens.ajustes
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import com.yldefonso.ojodchakra.screens.auth.AuthViewModel
+import com.yldefonso.ojodchakra.ui.componentes.AvatarIniciales
+import com.yldefonso.ojodchakra.ui.componentes.inicialesDe
+
 import com.yldefonso.ojodchakra.ui.iconos.IconosOjoD
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,14 +45,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.yldefonso.ojodchakra.data.repository.DiagnosticoRepository
 import com.yldefonso.ojodchakra.respaldo.Respaldo
 import com.yldefonso.ojodchakra.sesion.SesionUsuario
-import com.yldefonso.ojodchakra.screens.auth.AuthViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -113,6 +122,59 @@ fun AjustesScreen(onBack: () -> Unit, onIrAcceso: () -> Unit = {}) {
                 .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            EtiquetaSeccion("Cuenta")
+            val authVm: AuthViewModel = viewModel()
+            if (SesionUsuario.cuentaActiva) {
+                Tarjeta(padding = 16.dp) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AvatarIniciales(
+                            texto = inicialesDe(SesionUsuario.nombre ?: SesionUsuario.usuario),
+                            tamano = 56.dp
+                        )
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = SesionUsuario.nombre ?: SesionUsuario.usuario.orEmpty(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "@${SesionUsuario.usuario.orEmpty()}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = { authVm.cerrarSesion(onIrAcceso) },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Cerrar sesión", fontWeight = FontWeight.SemiBold)
+                    }
+                    Text(
+                        text = "Tus datos siguen guardados en este celular.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            } else {
+                Tarjeta(padding = 8.dp) {
+                    FilaAjuste(
+                        icono = IconosOjoD.Verificado,
+                        titulo = "Iniciar sesión o crear cuenta",
+                        descripcion = "Para enviar tus datos al servidor y revisar diagnósticos",
+                        onClick = onIrAcceso
+                    )
+                }
+            }
+
             EtiquetaSeccion("Apariencia")
             Tarjeta(padding = 8.dp) {
                 OpcionTema(
@@ -157,31 +219,6 @@ fun AjustesScreen(onBack: () -> Unit, onIrAcceso: () -> Unit = {}) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
-            }
-
-            EtiquetaSeccion("Cuenta")
-            val authVm: AuthViewModel = viewModel()
-            Tarjeta(padding = 8.dp) {
-                if (SesionUsuario.cuentaActiva) {
-                    FilaAjuste(
-                        icono = IconosOjoD.Agronomo,
-                        titulo = "Cuenta: ${SesionUsuario.usuario.orEmpty()}",
-                        descripcion = "Tus datos se envían a esta cuenta"
-                    )
-                    FilaAjuste(
-                        icono = IconosOjoD.Ajustes,
-                        titulo = "Cerrar sesión",
-                        descripcion = "Tus datos siguen guardados en el celular",
-                        onClick = { authVm.cerrarSesion(onIrAcceso) }
-                    )
-                } else {
-                    FilaAjuste(
-                        icono = IconosOjoD.Verificado,
-                        titulo = "Iniciar sesión o crear cuenta",
-                        descripcion = "Para enviar tus datos al servidor y revisar diagnósticos",
-                        onClick = onIrAcceso
-                    )
-                }
             }
 
             EtiquetaSeccion("Respaldo")

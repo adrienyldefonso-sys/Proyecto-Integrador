@@ -23,7 +23,7 @@ class SincronizacionWorker(
         if (!SesionUsuario.cuentaActiva) return Result.success()
         return try {
             val dao = AppDatabase.getInstance(applicationContext).sincronizacionDao()
-            val resumen = Sincronizador(dao, ClienteApiHttp()).sincronizar()
+            val resumen = Sincronizador(dao, ClienteApiHttp()) { SesionUsuario.propietarioActual }.sincronizar()
             if (resumen.sinConexion) Result.retry() else Result.success()
         } catch (e: Exception) {
             Result.retry()

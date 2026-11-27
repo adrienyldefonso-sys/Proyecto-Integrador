@@ -1,5 +1,9 @@
 package com.yldefonso.ojodchakra.screens.home
 
+import com.yldefonso.ojodchakra.sesion.SesionUsuario
+import com.yldefonso.ojodchakra.ui.componentes.AvatarIniciales
+import com.yldefonso.ojodchakra.ui.componentes.inicialesDe
+
 import com.yldefonso.ojodchakra.ui.iconos.IconosOjoD
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -186,7 +190,12 @@ private fun CabeceraInicio(saludo: String, onAjustes: () -> Unit) {
                     .padding(start = 20.dp, end = 12.dp, top = 14.dp, bottom = 26.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
+                if (SesionUsuario.cuentaActiva) {
+                    AvatarIniciales(
+                        texto = inicialesDe(SesionUsuario.nombre ?: SesionUsuario.usuario),
+                        tamano = 58.dp
+                    )
+                } else Image(
                     painter = painterResource(id = R.drawable.logo_ojodchakra),
                     contentDescription = "Logotipo de OjoDChakra",
                     modifier = Modifier
@@ -197,12 +206,12 @@ private fun CabeceraInicio(saludo: String, onAjustes: () -> Unit) {
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = saludo,
+                        text = if (SesionUsuario.cuentaActiva) "BIENVENIDO" else saludo,
                         style = MaterialTheme.typography.bodyMedium,
                         color = colores.bandaTexto.copy(alpha = 0.8f)
                     )
                     Text(
-                        text = "OjoDChakra",
+                        text = if (SesionUsuario.cuentaActiva) SesionUsuario.nombre.orEmpty() else "OjoDChakra",
                         style = MaterialTheme.typography.headlineSmall,
                         color = colores.bandaTexto
                     )

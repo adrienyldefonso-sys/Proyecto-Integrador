@@ -46,6 +46,8 @@ export const obtenerAlertas = () => pedir('/api/alertas/')
 
 export const obtenerSesion = () => pedir('/api/sesion/')
 
+export const obtenerMetricas = () => pedir('/api/metricas/')
+
 export const obtenerRevisiones = (estado = 'pendientes') =>
   pedir(`/api/revisiones/?estado=${encodeURIComponent(estado)}`)
 
@@ -57,14 +59,14 @@ function obtenerCookie(nombre) {
 function mensajeDeError(cuerpo) {
   if (typeof cuerpo.detail === 'string') return cuerpo.detail
   const primero = Object.values(cuerpo).flat()[0]
-  return typeof primero === 'string' ? primero : 'No se pudo guardar la revisión.'
+  return typeof primero === 'string' ? primero : 'No se pudo guardar el cambio.'
 }
 
-// Envía la decisión del agrónomo. Django exige el token CSRF en los cambios.
-export async function decidirRevision(diagnosticoId, datos) {
+// Envía un cambio en JSON. Django exige el token CSRF en los cambios.
+async function enviarJson(ruta, datos) {
   let respuesta
   try {
-    respuesta = await fetch(`/api/diagnosticos/${diagnosticoId}/revision/`, {
+    respuesta = await fetch(ruta, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
@@ -81,3 +83,17 @@ export async function decidirRevision(diagnosticoId, datos) {
   if (!respuesta.ok) throw new ErrorApi(respuesta.status, mensajeDeError(cuerpo))
   return cuerpo
 }
+
+// Envía la decisión del agrónomo sobre un diagnóstico.
+export const decidirRevision = (diagnosticoId, datos) =>
+  enviarJson(`/api/diagnosticos/${diagnosticoId}/revision/`, datos)
+
+export const obtenerUsuarios = () => pedir('/api/usuarios/')
+
+export const obtenerUsuario = (id) => pedir(`/api/usuarios/${encodeURIComponent(id)}/`)
+
+export const cambiarEstadoUsuario = (id, activo) =>
+  enviarJson(`/api/usuarios/${encodeURIComponent(id)}/estado/`, { activo })
+
+export const cerrarSesionesUsuario = (id) =>
+  enviarJson(`/api/usuarios/${encodeURIComponent(id)}/cerrar-sesiones/`, {})

@@ -6,7 +6,9 @@ import com.yldefonso.ojodchakra.red.ResultadoEnvio
 
 class Sincronizador(
     private val dao: SincronizacionDao,
-    private val cliente: ClienteApi
+    private val cliente: ClienteApi,
+    // Solo se envían los datos de este dueño; los de otras cuentas se quedan en el celular
+    private val propietario: () -> String? = { null }
 ) {
 
     suspend fun sincronizar(): ResumenSincronizacion {
@@ -15,13 +17,14 @@ class Sincronizador(
         var rechazados = 0
         var primerError: String? = null
         val parcelasRechazadas = mutableSetOf<String>()
+        val dueno = propietario()
 
         fun resumen(sinConexion: Boolean) = ResumenSincronizacion(
             parcelasEnviadas, diagnosticosEnviados, rechazados, sinConexion, primerError
         )
 
         // Primero las parcelas: el servidor solo acepta un diagnóstico si su parcela ya existe allí.
-        for (parcela in dao.parcelasPendientes()) {
+        for (parcela in dao.parcelasPendientes().filter { dueno == null || it.usuarioId == dueno }) {
             when (val resultado = cliente.enviarParcela(parcela)) {
                 is ResultadoEnvio.Exito -> {
                     dao.marcarParcelaSincronizada(parcela.id)
@@ -39,7 +42,7 @@ class Sincronizador(
             }
         }
 
-        for (diagnostico in dao.diagnosticosPendientes()) {
+        for (diagnostico in dao.diagnosticosPendientes().filter { dueno == null || it.usuarioId == dueno }) {
             val parcelaId = diagnostico.parcelaId
             if (parcelaId != null && parcelaId in parcelasRechazadas) {
                 rechazados++

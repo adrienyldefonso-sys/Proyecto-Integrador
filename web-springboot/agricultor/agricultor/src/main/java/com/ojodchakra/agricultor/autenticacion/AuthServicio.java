@@ -27,10 +27,13 @@ public class AuthServicio {
 
     private final UsuarioRepository usuarios;
     private final SesionMovilRepository sesiones;
+    private final InicioSesionMovilRepository inicios;
 
-    public AuthServicio(UsuarioRepository usuarios, SesionMovilRepository sesiones) {
+    public AuthServicio(UsuarioRepository usuarios, SesionMovilRepository sesiones,
+                        InicioSesionMovilRepository inicios) {
         this.usuarios = usuarios;
         this.sesiones = sesiones;
+        this.inicios = inicios;
     }
 
     @Transactional
@@ -39,12 +42,16 @@ public class AuthServicio {
         if (usuarios.existsByUsername(usuario)) {
             throw new ConflictoRegistroException("Ese nombre de usuario ya está registrado.");
         }
+        String telefono = solicitud.telefono().trim();
+        if (usuarios.existsByTelefono(telefono)) {
+            throw new ConflictoRegistroException("Ese número de celular ya está registrado.");
+        }
         Usuario nuevo = new Usuario(
                 UUID.randomUUID().toString(),
                 usuario,
                 HashContrasena.generar(solicitud.contrasena()),
                 solicitud.nombre().trim(),
-                blancoANulo(solicitud.telefono()));
+                telefono);
         usuarios.save(nuevo);
         return iniciarSesion(nuevo);
     }
@@ -96,6 +103,7 @@ public class AuthServicio {
         LocalDateTime expira = ahora.plusDays(DIAS_SESION);
         sesiones.save(new SesionMovil(
                 UUID.randomUUID().toString(), usuario.getId(), hashToken(token), ahora, expira));
+        inicios.save(new InicioSesionMovil(UUID.randomUUID().toString(), usuario.getId(), ahora));
         return new RespuestaAuth(
                 usuario.getId(),
                 usuario.getUsername(),
@@ -128,9 +136,5 @@ public class AuthServicio {
 
     private static String normalizar(String usuario) {
         return usuario.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static String blancoANulo(String texto) {
-        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 }

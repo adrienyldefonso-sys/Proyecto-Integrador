@@ -1,0 +1,17 @@
+export default function Logo({ tamano = 40 }) {
+  return (
+    <svg width={tamano} height={tamano} viewBox="0 0 64 64" role="img" aria-label="Logotipo de OjoDChakra">
+      <circle cx="32" cy="32" r="30" fill="#ebf3ec" stroke="#2e6a38" strokeWidth="2.5" />
+      <path
+        d="M8 34c7-12 16-18 24-18s17 6 24 18c-7 12-16 18-24 18S15 46 8 34z"
+        fill="#ffffff"
+        stroke="#1f4d28"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="32" cy="34" r="9.5" fill="#2e6a38" />
+      <path d="M32 27c-4.5 3.2-5 8.6 0 13 5-4.4 4.5-9.8 0-13z" fill="#1f4d28" />
+      <path d="M32 29v9" stroke="#ebf3ec" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}

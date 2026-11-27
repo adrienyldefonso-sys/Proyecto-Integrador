@@ -34,9 +34,9 @@ interface SincronizacionDao {
         fecha: Long?
     )
 
-    @Query("SELECT COUNT(*) FROM parcelas WHERE estado_sincronizacion = 'PENDIENTE'")
-    fun contarParcelasPendientes(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM parcelas WHERE estado_sincronizacion = 'PENDIENTE' AND usuario_id = :usuarioId")
+    fun contarParcelasPendientes(usuarioId: String): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM diagnosticos WHERE estado_sincronizacion = 'PENDIENTE'")
-    fun contarDiagnosticosPendientes(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM diagnosticos WHERE estado_sincronizacion = 'PENDIENTE' AND usuario_id = :usuarioId")
+    fun contarDiagnosticosPendientes(usuarioId: String): Flow<Int>
 }

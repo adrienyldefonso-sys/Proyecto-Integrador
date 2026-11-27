@@ -10,6 +10,12 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface DiagnosticoDao {
 
+    @Query("SELECT * FROM diagnosticos WHERE usuario_id = :usuarioId ORDER BY fecha_captura DESC")
+    fun observarDe(usuarioId: String): Flow<List<Diagnostico>>
+
+    @Query("UPDATE diagnosticos SET usuario_id = :nuevo WHERE usuario_id = :anterior")
+    suspend fun reasignarUsuario(anterior: String, nuevo: String)
+
     @Query("SELECT * FROM diagnosticos ORDER BY fecha_captura DESC")
     fun observarTodos(): Flow<List<Diagnostico>>
 

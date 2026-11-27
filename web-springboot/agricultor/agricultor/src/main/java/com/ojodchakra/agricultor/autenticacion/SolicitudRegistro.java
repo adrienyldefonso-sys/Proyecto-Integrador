@@ -18,7 +18,8 @@ public record SolicitudRegistro(
         @Size(max = 150)
         String nombre,
 
-        @Size(max = 20)
+        @NotBlank
+        @Pattern(regexp = "^\\d{9}$", message = "El celular debe tener 9 dígitos.")
         String telefono
 ) {
 }

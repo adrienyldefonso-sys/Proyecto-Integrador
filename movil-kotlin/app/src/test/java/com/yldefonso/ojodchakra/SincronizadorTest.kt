@@ -27,8 +27,8 @@ class SincronizadorTest {
         override suspend fun diagnosticosPendientes(): List<Diagnostico> = diagnosticos
         override suspend fun marcarParcelaSincronizada(id: String) { parcelasMarcadas += id }
         override suspend fun marcarDiagnosticoSincronizado(id: String) { diagnosticosMarcados += id }
-        override fun contarParcelasPendientes(): Flow<Int> = flowOf(parcelas.size)
-        override fun contarDiagnosticosPendientes(): Flow<Int> = flowOf(diagnosticos.size)
+        override fun contarParcelasPendientes(usuarioId: String): Flow<Int> = flowOf(parcelas.size)
+        override fun contarDiagnosticosPendientes(usuarioId: String): Flow<Int> = flowOf(diagnosticos.size)
     }
 
     private class ClienteFalso(

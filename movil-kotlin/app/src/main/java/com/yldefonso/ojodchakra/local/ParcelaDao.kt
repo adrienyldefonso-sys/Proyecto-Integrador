@@ -24,6 +24,10 @@ interface ParcelaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun reemplazar(parcela: Parcela)
 
+    /** Pasa los datos de un dueño a otro (al iniciar sesión después de usar la app sin cuenta). */
+    @Query("UPDATE parcelas SET usuario_id = :nuevo WHERE usuario_id = :anterior")
+    suspend fun reasignarUsuario(anterior: String, nuevo: String)
+
     @Query("SELECT * FROM parcelas")
     suspend fun todas(): List<Parcela>
 

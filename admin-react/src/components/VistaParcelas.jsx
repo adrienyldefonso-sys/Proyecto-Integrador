@@ -1,66 +1,71 @@
-import { useEffect, useState } from 'react'
-import { esSinAcceso, obtenerParcelas } from '../api'
-import AvisoAcceso from './AvisoAcceso'
+import { useMemo } from 'react'
+import { obtenerAlertas, obtenerParcelas } from '../api'
+import { nivelesPorParcela } from '../formato'
+import { useCarga } from '../hooks/useCarga'
+import EncabezadoPagina from './EncabezadoPagina'
+import ErrorCarga from './ErrorCarga'
+import EstadoVacio from './EstadoVacio'
 import Historial from './Historial'
+import Icono from './Icono'
 import ListaParcelas from './ListaParcelas'
 
-export default function VistaParcelas({ seleccion, onSeleccionar }) {
-  const [parcelas, setParcelas] = useState(null)
-  const [error, setError] = useState(null)
-  const [intento, setIntento] = useState(0)
+export default function VistaParcelas({ parcelaId, onSeleccionar, onVolver }) {
+  const parcelas = useCarga(obtenerParcelas, [])
+  // Solo sirve para marcar la urgencia de cada parcela; si falla, la lista se muestra igual
+  const alertas = useCarga(obtenerAlertas, [], { refrescoMs: 60000 })
+  const niveles = useMemo(() => nivelesPorParcela(alertas.datos), [alertas.datos])
 
-  useEffect(() => {
-    let vigente = true
-    obtenerParcelas()
-      .then((datos) => {
-        if (vigente) setParcelas(datos)
-      })
-      .catch((falla) => {
-        if (vigente) setError(falla)
-      })
-    return () => {
-      vigente = false
-    }
-  }, [intento])
+  const cabecera = (
+    <EncabezadoPagina
+      titulo="Parcelas"
+      subtitulo="Consulta el historial de diagnósticos con su evidencia fotográfica."
+      actualizado={parcelas.actualizado}
+      onActualizar={parcelas.recargar}
+    />
+  )
 
-  const reintentar = () => {
-    setError(null)
-    setParcelas(null)
-    setIntento((n) => n + 1)
-  }
-
-  if (error) {
-    return esSinAcceso(error) ? (
-      <AvisoAcceso mensaje={error.message} onReintentar={reintentar} />
-    ) : (
-      <section className="aviso">
-        <h3>No se pudo cargar el panel</h3>
-        <p>{error.message}</p>
-        <button type="button" className="boton" onClick={reintentar}>
-          Reintentar
-        </button>
-      </section>
+  if (parcelas.error) {
+    return (
+      <>
+        {cabecera}
+        <ErrorCarga
+          error={parcelas.error}
+          titulo="No se pudieron cargar las parcelas"
+          onReintentar={parcelas.recargar}
+        />
+      </>
     )
   }
 
-  if (parcelas === null) {
-    return <p className="muted">Cargando parcelas...</p>
-  }
-
   return (
-    <div className="disposicion">
-      <ListaParcelas
-        parcelas={parcelas}
-        seleccionId={seleccion}
-        onSeleccionar={onSeleccionar}
-      />
-      {seleccion ? (
-        <Historial key={seleccion} parcelaId={seleccion} />
-      ) : (
-        <section className="panel">
-          <p className="muted">Elige una parcela para ver su historial de diagnósticos.</p>
-        </section>
-      )}
-    </div>
+    <>
+      {cabecera}
+      <div className={`maestro-detalle${parcelaId ? ' con-seleccion' : ''}`}>
+        <ListaParcelas
+          parcelas={parcelas.datos}
+          cargando={parcelas.cargando}
+          seleccionId={parcelaId}
+          niveles={niveles}
+          onSeleccionar={onSeleccionar}
+        />
+        <div className="detalle">
+          {parcelaId ? (
+            <>
+              <button type="button" className="boton secundario solo-movil" onClick={onVolver}>
+                <Icono nombre="atras" tamano={16} />
+                Volver a las parcelas
+              </button>
+              <Historial key={parcelaId} parcelaId={parcelaId} />
+            </>
+          ) : (
+            <section className="tarjeta-panel">
+              <EstadoVacio icono="parcela" titulo="Elige una parcela">
+                Selecciónala en la lista para ver su historial de diagnósticos.
+              </EstadoVacio>
+            </section>
+          )}
+        </div>
+      </div>
+    </>
   )
 }

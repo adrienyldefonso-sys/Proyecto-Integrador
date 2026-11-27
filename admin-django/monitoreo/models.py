@@ -181,3 +181,26 @@ class SesionMovil(models.Model):
 
     def __str__(self):
         return f"Sesión móvil de {self.usuario.username}"
+
+
+class InicioSesionMovil(models.Model):
+    """Cada vez que una cuenta entra desde la app móvil. Sirve para revisar quién usa la app y cuándo."""
+
+    id = models.CharField(
+        max_length=100,
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="inicios_sesion"
+    )
+    fecha = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"Inicio de {self.usuario.username} el {self.fecha:%d/%m/%Y %H:%M}"
